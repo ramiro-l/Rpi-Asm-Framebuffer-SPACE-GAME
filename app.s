@@ -503,7 +503,7 @@ estrellita: // pre: {mod (x3/3), 2 = 0}    args: (in x0 = direccion base del fra
 
 endEstrellita: br lr
 
-nave: 		//  args: (in x0 = direccion base del framebuffer, x1 = x, x2 = y)         
+nave: 		// pre: { 0 <= x <= 480 && 0 <= y <= 640}   args: (in x0 = direccion base del framebuffer, x1 = x, x2 = y)         
 	sub sp, sp , 40
 	stur x19 , [sp, #0]
 	stur x20 , [sp, #8]
@@ -563,6 +563,20 @@ nave: 		//  args: (in x0 = direccion base del framebuffer, x1 = x, x2 = y)
 	mov x1, 12			// arg: alto
 	mov x2, x22 		// arg: color
 	bl triangulo_bajo
+
+	//Rectangulo central alargado
+
+	mov x0, x19			// arg: direccion base del framebuffer
+	mov x1,	x20 		// arg: x
+	mov x2,	x21			// arg: y
+	bl pos_base			// ret: x7 = &( x, y ).
+
+	mov x0, x7			// arg: &( x, y ) es el centro de la figura.
+	mov x1, 80			// arg: ancho
+	mov x2, 6			// arg: alto
+	mov x3, x22			// arg: color
+	bl rectangulo
+
 
 	//-------------------- END CODE ---------------------------//
 	mov  x0, x19

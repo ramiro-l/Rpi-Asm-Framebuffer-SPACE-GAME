@@ -98,7 +98,7 @@ docker exec -it rpi-qemu /bin/bash
 ```bash
 # Dar permisos
 chmod +x ./bin/gpiom
-# Oara poder debugear, modificar el makefile agregando 
+# Para poder debugear, modificar el makefile agregando 
 runQEMU-GDB: kernel8.img
       qemu-system-aarch64 -s -S -M raspi3b -kernel kernel8.img -serial stdio -qtest unix:/tmp/qtest.sock,server,nowait
 ```
