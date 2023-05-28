@@ -417,13 +417,16 @@ endPintarFondo:	br lr
 
 estrellita: // pre: {mod (x3/3), 2 = 0}    args: (in x0 = direccion base del framebuffer, x1 = x, x2 = y, x3 = alto, x4 = color)
 
-	sub sp, sp , 48
+	sub sp, sp , 72
 	stur x19 , [sp, #0]
 	stur x20 , [sp, #8]
 	stur x21 , [sp, #16]
 	stur x22 , [sp, #24]
 	stur x23 , [sp, #32]
-	stur lr , [sp, #40]
+	stur x24 , [sp, #40]
+	stur x25 , [sp, #48]
+	stur x26 , [sp, #56]
+	stur lr , [sp, #64]
 
 	bl temp_cero
 
@@ -433,7 +436,7 @@ estrellita: // pre: {mod (x3/3), 2 = 0}    args: (in x0 = direccion base del fra
 	mov x22, x3
 	mov x23, x4
 
-	//-------------------- CODE ---------------------------//
+ //-------------------- CODE ---------------------------//
 	
 	mov  x10, 3
 	sdiv x24 , x22, x10 // x9 = alto / 3
@@ -483,7 +486,7 @@ estrellita: // pre: {mod (x3/3), 2 = 0}    args: (in x0 = direccion base del fra
 	mov x2, x23 		// color
 	bl triangulo_alto
 
-	//-------------------- END CODE ---------------------------//
+ //-------------------- END CODE ---------------------------//
 
 	mov  x0, x19
 	mov  x1, x20
@@ -498,8 +501,11 @@ estrellita: // pre: {mod (x3/3), 2 = 0}    args: (in x0 = direccion base del fra
 	ldur x21 , [sp, #16]
 	ldur x22 , [sp, #24]
 	ldur x23 , [sp, #32]
-	ldur lr , [sp, #40]
-	add sp, sp , 48
+	ldur x21 , [sp, #40]
+	ldur x22 , [sp, #48]
+	ldur x23 , [sp, #56]
+	ldur lr , [sp, #64]
+	add sp, sp , 72
 
 endEstrellita: br lr
 
@@ -517,7 +523,7 @@ nave: 		// pre: { 0 <= x <= 480 && 0 <= y <= 640}   args: (in x0 = direccion bas
 	mov x20, x1
 	mov x21, x2
 
-	//-------------------- CODE ---------------------------//
+ //-------------------- CODE ---------------------------//
 
 	//Rectangulo central blanco
 	mov x0, x19			// arg: direccion base del framebuffer
@@ -529,7 +535,7 @@ nave: 		// pre: { 0 <= x <= 480 && 0 <= y <= 640}   args: (in x0 = direccion bas
 	movk x22, 0xF5F5, lsl 00	//BLANCO	
 
 	mov x0, x7			// arg: &( x, y ) es el centro de la figura.
-	mov x1, 24			// arg: ancho
+	mov x1, 24		// arg: ancho
 	mov x2, 56			// arg: alto
 	mov x3, x22 		// arg: color
 	bl rectangulo
@@ -558,7 +564,7 @@ nave: 		// pre: { 0 <= x <= 480 && 0 <= y <= 640}   args: (in x0 = direccion bas
 	mov x1,	x20 		// arg: x
 	mov x2,	x9			// arg: y
 	bl pos_base			// ret: x7 = &( x, (y - 30) ).
-
+    
 	mov x0, x7			// arg: centro de la figura 
 	mov x1, 12			// arg: alto
 	mov x2, x22 		// arg: color
@@ -570,15 +576,220 @@ nave: 		// pre: { 0 <= x <= 480 && 0 <= y <= 640}   args: (in x0 = direccion bas
 	mov x1,	x20 		// arg: x
 	mov x2,	x21			// arg: y
 	bl pos_base			// ret: x7 = &( x, y ).
+    
+	movz x9, 0xab, lsl 16		//gris
+	movk x9, 0xa3a2, lsl 00	
+
 
 	mov x0, x7			// arg: &( x, y ) es el centro de la figura.
-	mov x1, 80			// arg: ancho
+	mov x1, 60			// arg: ancho
 	mov x2, 6			// arg: alto
-	mov x3, x22			// arg: color
+	mov x3, x9			// arg: color
+	bl rectangulo
+
+	//Rectangulo derecho
+	add x9, x20, 30		// calculo: x + 30
+	
+	mov x0, x19			// arg: direccion base del framebuffer
+	mov x1,	x9 		// arg: x
+	mov x2,	x21			// arg: y
+	bl pos_base			// ret: x7 = &( x, (y - 30) ).
+
+	mov x0, x7			// arg: &( x, y ) es el centro de la figura.
+	mov x1, 6			// arg: ancho
+	mov x2, 30		// arg: alto
+	mov x3, x22 			// arg: color
+	bl rectangulo
+    
+
+	//Rectangulo izquierdo
+	sub x9, x20, 30	// calculo: x - 30
+	
+	mov x0, x19			// arg: direccion base del framebuffer
+	mov x1,	x9 		// arg: x
+	mov x2,	x21			// arg: y
+	bl pos_base			// ret: x7 = &( x, (y - 30) ).
+
+	mov x0, x7			// arg: &( x, y ) es el centro de la figura.
+	mov x1, 6			// arg: ancho
+	mov x2, 30			// arg: alto
+	mov x3, x22 			// arg: color
+	bl rectangulo
+	//Rectangulo derecho mas chico
+	add x9, x20, 18		// calculo: x + 18
+	
+	mov x0, x19			// arg: direccion base del framebuffer
+	mov x1,	x9 		// arg: x
+	mov x2,	x21			// arg: y
+	bl pos_base			// ret: x7 = &( x, (y - 30) ).
+
+	mov x0, x7			// arg: &( x, y ) es el centro de la figura.
+	mov x1, 4			// arg: ancho
+	mov x2, 18		// arg: alto
+	mov x3, x22 			// arg: color
+	bl rectangulo
+    
+
+	//Rectangulo izquierdo mas chico
+	sub x9, x20, 18		// calculo: x - 18
+	
+	mov x0, x19			// arg: direccion base del framebuffer
+	mov x1,	x9 		// arg: x
+	mov x2,	x21			// arg: y
+	bl pos_base			// ret: x7 = &( x, (y - 30) ).
+
+	mov x0, x7			// arg: &( x, y ) es el centro de la figura.
+	mov x1, 4			// arg: ancho
+	mov x2, 18			// arg: alto
+	mov x3, x22 			// arg: color
+	bl rectangulo
+	//Rectangulo derecho mas chico rojo
+	add x9, x20, 30		// calculo: x + 30
+	sub x10, x21, 10     // calculo y - 5
+
+	mov x0, x19			// arg: direccion base del framebuffer
+	mov x1,	x9 		// arg: x
+	mov x2,	x10			// arg: y
+	bl pos_base			// ret: x7 = &( x, (y - 30) ).
+
+	movz x9, 0xe0, lsl 16		//gris
+	movk x9, 0x4136, lsl 00	
+
+	mov x0, x7			// arg: &( x, y ) es el centro de la figura.
+	mov x1, 6			// arg: ancho
+	mov x2, 4		// arg: alto
+	mov x3, x9 			// arg: color
+	bl rectangulo
+    
+
+	//Rectangulo izquierdo mas chico rojo
+	sub x9, x20, 30		// calculo: x - 30
+	sub x10, x21, 10     // calculo y - 5
+
+	mov x0, x19			// arg: direccion base del framebuffer
+	mov x1,	x9 		// arg: x
+	mov x2,	x10			// arg: y
+	bl pos_base			// ret: x7 = &( x, (y - 30) ).
+
+	movz x9, 0xe0, lsl 16		//gris
+	movk x9, 0x4136, lsl 00	
+
+	mov x0, x7			// arg: &( x, y ) es el centro de la figura.
+	mov x1, 6			// arg: ancho
+	mov x2, 4			// arg: alto
+	mov x3, x9 			// arg: color
 	bl rectangulo
 
 
-	//-------------------- END CODE ---------------------------//
+	//Rectangulo derecho mas chico amarillo
+	add x9, x20, 30		// calculo: x + 30
+	add x10, x21, 15     // calculo y + 15
+
+	mov x0, x19			// arg: direccion base del framebuffer
+	mov x1,	x9 		// arg: x
+	mov x2,	x10			// arg: y
+	bl pos_base			// ret: x7 = &( x, (y - 30) ).
+
+	movz x9, 0xa6, lsl 16		//gris
+	movk x9, 0x7d1e, lsl 00	
+
+	mov x0, x7			// arg: &( x, y ) es el centro de la figura.
+	mov x1, 6			// arg: ancho
+	mov x2, 5		// arg: alto
+	mov x3, x9 			// arg: color
+	bl rectangulo
+    
+
+	//Rectangulo izquierdo mas chico amrillo
+	sub x9, x20, 30		// calculo: x - 30
+	add x10, x21, 15     // calculo y + 15
+
+	mov x0, x19			// arg: direccion base del framebuffer
+	mov x1,	x9 		// arg: x
+	mov x2,	x10			// arg: y
+	bl pos_base			// ret: x7 = &( x, (y - 30) ).
+
+	movz x9, 0xa6, lsl 16		//gris
+	movk x9, 0x7d1e, lsl 00	
+
+	mov x0, x7			// arg: &( x, y ) es el centro de la figura.
+	mov x1, 6			// arg: ancho
+	mov x2, 5			// arg: alto
+	mov x3, x9 			// arg: color
+	bl rectangulo
+    	//Rectangulo derecho mas chico maranja
+	add x9, x20, 30		// calculo: x + 30
+	add x10, x21, 20     // calculo y + 20
+
+	mov x0, x19			// arg: direccion base del framebuffer
+	mov x1,	x9 		// arg: x
+	mov x2,	x10			// arg: y
+	bl pos_base			// ret: x7 = &( x, (y - 30) ).
+
+	movz x9, 0xad, lsl 16		//gris
+	movk x9, 0x3c23, lsl 00	
+
+	mov x0, x7			// arg: &( x, y ) es el centro de la figura.
+	mov x1, 6			// arg: ancho
+	mov x2, 6		// arg: alto
+	mov x3, x9 			// arg: color
+	bl rectangulo
+    
+
+	//Rectangulo izquierdo mas chico naranja
+	sub x9, x20, 30		// calculo: x - 30
+	add x10, x21, 20     // calculo y + 20
+
+	mov x0, x19			// arg: direccion base del framebuffer
+	mov x1,	x9 		// arg: x
+	mov x2,	x10			// arg: y
+	bl pos_base			// ret: x7 = &( x, (y - 30) ).
+
+	movz x9, 0xad, lsl 16		//gris
+	movk x9, 0x3c23, lsl 00	
+
+	mov x0, x7			// arg: &( x, y ) es el centro de la figura.
+	mov x1, 6			// arg: ancho
+	mov x2, 6			// arg: alto
+	mov x3, x9 			// arg: color
+	bl rectangulo
+
+	//Rectangulo abajo amarillo
+	add x10, x21, 31    // calculo y + 31
+
+	mov x0, x19			// arg: direccion base del framebuffer
+	mov x1,	x20 		// arg: x
+	mov x2,	x10			// arg: y
+	bl pos_base			// ret: x7 = &( x, (y - 30) ).
+
+	movz x9, 0xa6, lsl 16		//gris
+	movk x9, 0x7d1e, lsl 00	
+
+	mov x0, x7			// arg: &( x, y ) es el centro de la figura.
+	mov x1, 22			// arg: ancho
+	mov x2, 6			// arg: alto
+	mov x3, x9 			// arg: color
+	bl rectangulo
+
+	//Rectangulo abajo naranja
+	add x10, x21, 36    // calculo y + 36
+
+	mov x0, x19			// arg: direccion base del framebuffer
+	mov x1,	x20 		// arg: x
+	mov x2,	x10			// arg: y
+	bl pos_base			// ret: x7 = &( x, (y - 30) ).
+
+	movz x9, 0xad, lsl 16		//gris
+	movk x9, 0x3c23, lsl 00		
+
+	mov x0, x7			// arg: &( x, y ) es el centro de la figura.
+	mov x1, 20			// arg: ancho
+	mov x2, 5			// arg: alto
+	mov x3, x9 			// arg: color
+	bl rectangulo
+
+
+ //-------------------- END CODE ---------------------------//
 	mov  x0, x19
 	mov  x1, x20
 	mov  x2, x21
