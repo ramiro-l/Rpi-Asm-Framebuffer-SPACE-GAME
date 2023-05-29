@@ -45,6 +45,110 @@ POST:
 
 
 
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+estrellita: // pre: {mod (x3/3), 2 = 0}    args: (in x0 = direccion base del framebuffer, x1 = x, x2 = y, x3 = alto, x4 = color)
+
+	sub sp, sp , 72
+	stur x19 , [sp, #0]
+	stur x20 , [sp, #8]
+	stur x21 , [sp, #16]
+	stur x22 , [sp, #24]
+	stur x23 , [sp, #32]
+	stur x24 , [sp, #40]
+	stur x25 , [sp, #48]
+	stur x26 , [sp, #56]
+	stur lr , [sp, #64]
+
+	bl temp_cero
+
+	mov x19, x0
+	mov x20, x1
+	mov x21, x2
+	mov x22, x3
+	mov x23, x4
+
+ //-------------------- CODE ---------------------------//
+	
+	mov  x10, 3
+	sdiv x24 , x22, x10 // x9 = alto / 3
+	sub  x25, x21, x24
+	add  x26, x21, x24
+ 
+
+	//Triangulo superior
+	
+	mov x0, x19 		// arg: direccion base del framebuffer
+	mov x1,	x20			// arg: x
+	mov x2,	x25			// arg: y
+	bl pos_base 		// ret: x7
+
+	mov x0, x7			// arg: centro de la figura 
+	mov x1, x24			// arg: alto
+	mov x2, x23 		// arg: color
+	bl triangulo_bajo
+
+
+	// Cuadrado central
+
+	mov x0, x19 		// arg: direccion base del framebuffer
+	mov x1,	x20 		// arg: x
+	mov x2,	x21			// arg: y
+	bl pos_base         // ret: x7
+
+	lsl x10 , x24, 1  	// x10 = alto * 2 
+
+	mov x0, x7			// arg: centro de la figura 
+	mov x1, x10			// arg: ancho
+	mov x2, x24			// arg: alto
+	mov x3, x23 		// arg: color
+	bl rectangulo
+
+
+	// Triangulo inferrior
+
+	sub x26, x26, 1
+	mov x0, x19			// arg: direccion base del framebuffer
+	mov x1,	x20 		// arg: x
+	mov x2,	x26			// arg: y
+	bl pos_base			// ret: x7
+
+	mov x0, x7			// arg: centro de la figura 
+	mov x1, x24			// alto
+	mov x2, x23 		// color
+	bl triangulo_alto
+
+ //-------------------- END CODE ---------------------------//
+
+	mov  x0, x19
+	mov  x1, x20
+	mov  x2, x21
+	mov  x3, x22
+	mov  x4, x23
+
+	bl temp_cero
+
+	ldur x19 , [sp, #0]
+	ldur x20 , [sp, #8]
+	ldur x21 , [sp, #16]
+	ldur x22 , [sp, #24]
+	ldur x23 , [sp, #32]
+	ldur x21 , [sp, #40]
+	ldur x22 , [sp, #48]
+	ldur x23 , [sp, #56]
+	ldur lr , [sp, #64]
+	add sp, sp , 72
+
+endEstrellita: br lr
+
+
+
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
 pos_base: // pre: { 0 <= x <= 480 && 0 <= y <= 640}    args: (in x6 = x,  x7 = y ;  out x0 = posicion de retorno)
 
     // pre { 0 <= x <= 480}
@@ -80,7 +184,7 @@ endPos_base:	br lr
 
 
 
-////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 		.equ SCREEN_WIDTH,   640 //Ancho
 		.equ SCREEN_HEIGH,   480 //Alto
