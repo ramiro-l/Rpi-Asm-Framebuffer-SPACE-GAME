@@ -42,7 +42,7 @@ main:
 	mov x0, x20    // arg: direccion base del framebuffer
 	mov x1, x19    // arg: color
 	bl pintarFondo
-	
+
 
 	// Varias Estrellas
 	movz x19, 0xFF, lsl 16		
@@ -73,7 +73,6 @@ main:
 	mov x1, 320			// arg: x
 	mov x2, 340			// arg: y
 	bl nave
-
 
 	//-------------------- END CODE MAIN -------------------------//
 

@@ -101,5 +101,7 @@ chmod +x ./bin/gpiom
 # Para poder debugear, modificar el makefile agregando 
 runQEMU-GDB: kernel8.img
       qemu-system-aarch64 -s -S -M raspi3b -kernel kernel8.img -serial stdio -qtest unix:/tmp/qtest.sock,server,nowait
+      
+add-symbol-file app.o 0x00000000000900c8
 ```
 
