@@ -76,8 +76,8 @@ main: // x0 = direccion base del framebuffer
 
 	mov x1 , 13			// Setea el deley
 	bl deley			// Ejecuta el deley
-
-	b InfLoop_W
+	cmp x2, 50
+	b.hi InfLoop_W
 
 	//-------------------- END CODE MAIN -------------------------//
 
