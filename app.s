@@ -41,17 +41,17 @@ main:
 	movk x1, 0x0E0E, lsl 00		//Color del fondo (gris oscuro)
 	bl pintarFondo 
 
-	mov x21, 80
+	mov x21, 150
 	mov x1, 320  // x
-	mov x2, 350  // y
-
+	mov x2, 400  // y
+	
 	// NAVE EN MOVIMIENTO
  loop:   
 	bl fondoEstrellado 	// Se pinta el fondo con las estrellas
 	mov x1, 320  		// x
 	bl nave				// Dibuja la nave
 
-	sub x2, x2, 2 		// y - 1
+	sub x2, x2, 2  		// y - 1
 	mov x1 , 13			// Setea el deley
 	bl deley			// Ejecuta el deley
 
@@ -287,11 +287,19 @@ endRectangulo:	br lr
 pintarFondo: // pre: {}  args: (in x0 = direccion base del framebuffer, x1 = color del fondo)
 
 	/* Inicializacion */
-	sub sp, sp , 16
+	sub sp, sp , 48
 	stur x19 , [sp, #0]
-	stur lr , [sp, #8]
+	stur x20 , [sp, #8]
+	stur x21 , [sp, #16]
+	stur x22 , [sp, #24]
+	stur x23 , [sp, #32]
+	stur lr , [sp, #40]
 
 	mov x19, x1
+	mov x20, x2
+	mov x21, x3
+	mov x22, x4
+	mov x23, x5
 	//-------------------- CODE ---------------------------//
 
 	mov x9, SCREEN_WIDTH  // x
@@ -309,11 +317,19 @@ pintarFondo: // pre: {}  args: (in x0 = direccion base del framebuffer, x1 = col
 	//-------------------- END CODE -------------------------//
 
 	mov x1, x19
+	mov x2, x20 
+	mov x3, x21 
+	mov x4, x22 
+	mov x5, x23 
 
 	ldur x19 , [sp, #0]
-	ldur lr , [sp, #8]
+	ldur x20 , [sp, #8]
+	ldur x21 , [sp, #16]
+	ldur x22 , [sp, #24]
+	ldur x23 , [sp, #32]
+	ldur lr , [sp, #40]
 
-	add sp, sp , 16
+	add sp, sp , 48
 endPintarFondo:	br lr
 
 estrella: // pre: {}    args: (in x0 = direccion base del framebuffer, x1 = x, x2 = y, x3 = color, x4 = ancho)
@@ -358,17 +374,23 @@ estrella: // pre: {}    args: (in x0 = direccion base del framebuffer, x1 = x, x
 endEstrella: br lr
 
 nave: 		// pre: { 0 <= x <= 480 && 0 <= y <= 640}   args: (in x0 = direccion base del framebuffer, x1 = x, x2 = y)         
-	sub sp, sp , 56
+	sub sp, sp , 80
 	stur x19 , [sp, #0]
 	stur x20 , [sp, #8]
 	stur x21 , [sp, #16]
 	stur x22 , [sp, #24]
 	stur x23 , [sp, #32]
 	stur x24 , [sp, #40]
-	stur lr , [sp, #48]
+	stur x25 , [sp, #48]
+	stur x26 , [sp, #56]
+	stur x27 , [sp, #64]
+	stur lr , [sp, #72]
 
 	mov x19, x1
 	mov x20, x2
+	mov x25, x3
+	mov x26, x4
+	mov x27, x5
 
  //-------------------- CODE ---------------------------//
 
@@ -387,12 +409,13 @@ nave: 		// pre: { 0 <= x <= 480 && 0 <= y <= 640}   args: (in x0 = direccion bas
 	
 	//Rectangulo negro fondo
 						// arg: x0 = direccion base del framebuffer
+	add x9, x20, 21
 	mov x1,	x19 		// arg: x
-	mov x2,	x20			// arg: y
+	mov x2,	x9			// arg: y
 	movz x3, 0x0E, lsl 16		
 	movk x3, 0x0E0E, lsl 00		//Color del fondo (gris oscuro)
 	mov x4, 75		    // arg: ancho
-	mov x5, 80			// arg: alto
+	mov x5, 38			// arg: alto
 	bl rectangulo 
 
 	//Rectangulo central blanco
@@ -591,10 +614,14 @@ nave: 		// pre: { 0 <= x <= 480 && 0 <= y <= 640}   args: (in x0 = direccion bas
 	mov x1, x9 		    // arg: x
 	mov x2, x10			// arg: y
 	bl rectangulo
+
  //-------------------- END CODE ---------------------------//
 
 	mov  x1, x19
 	mov  x2, x20
+	mov  x3, x25 
+	mov  x4, x26 
+	mov  x5, x27 
 
 	ldur x19 , [sp, #0]
 	ldur x20 , [sp, #8]
@@ -602,8 +629,11 @@ nave: 		// pre: { 0 <= x <= 480 && 0 <= y <= 640}   args: (in x0 = direccion bas
 	ldur x22 , [sp, #24]
 	ldur x23 , [sp, #32]
 	ldur x24 , [sp, #40]
-	ldur lr , [sp, #48]
-	add sp, sp , 56
+	ldur x25 , [sp, #48]
+	ldur x26 , [sp, #56]
+	ldur x27 , [sp, #64]
+	ldur lr , [sp, #72]
+	add sp, sp , 80
 
 endNave: br lr
 
@@ -618,92 +648,65 @@ fondoEstrellado:
 	mov x20, x2
 	mov x21, x3
 	mov x22, x4
+	
 
  //-------------------- CODE ---------------------------//
 
-	movz x3, 0xff, lsl 16		
-	movk x3, 0xffff, lsl 00		//Color del las estrellas
-
-	mov x1, 250
-	mov x2, 222
+	movz x3, 0xF3, lsl 16		
+	movk x3, 0xF3F3, lsl 00		//Color del las estrellas
+    	
+	mov x23, 50
+	mov x24, 5
+	
+    mov x1, 10
+	mov x2, 10
 	mov x4, 16
-	bl estrella	
-	mov x1, 420
-	mov x2, 40
-	mov x4, 9
+    mov x5, 5
+
+    lopi: mov x4, 8
+
+	kl:
+	    add x1, x2, x1
+		add x1, x1, 100
+	    bl estrella
+		add x1, x2, x1
+		sub x24, x24, 1
+		cbnz x24, kl
+    mov x24, 1
+    add x2, x2, 50
 	bl estrella
-	mov x1, 332
-	mov x2, 228
-	mov x4, 12
-	bl estrella	
+	sub x23, x23, 1
+	cbnz x23, lopi 
 
-
-	mov x1, 110
-	mov x2, 122
+	mov x1, 50
+	mov x2, 17
 	mov x4, 16
-	bl estrella	
-	mov x1, 120
-	mov x2, 240
-	mov x4, 9
-	bl estrella
-	mov x1, 132
-	mov x2, 228
-	mov x4, 12
-	bl estrella	
+    mov x5, 5
 
 
+    mov x23, 50
+    lopi2: mov x4, 12
 
-	mov x1, 410
-	mov x2, 142
-	mov x4, 16
-	bl estrella	
-	mov x1, 520
-	mov x2, 240
-	mov x4, 9
+	kll:
+	    add x1, x2, x1
+		add x1, x1, 30
+	    bl estrella
+		add x1, x2, x1
+		sub x24, x24, 1
+		cbnz x24, kll
+    mov x24, 1
+    add x2, x2, 10
 	bl estrella
-	mov x1, 132
-	mov x2, 428
-	mov x4, 12
-	bl estrella
+	sub x23, x23, 1
+	cbnz x23, lopi2 
 
-
-	mov x1, 510
-	mov x2, 442
-	mov x4, 16
-	bl estrella	
-	mov x1, 600
-	mov x2, 340
-	mov x4, 9
-	bl estrella
-	mov x1, 490
-	mov x2, 400
-	mov x4, 12
-	bl estrella
-
-
-	mov x1, 200
-	mov x2, 100
-	mov x4, 12
-	bl estrella	
-	mov x1, 90
-	mov x2, 97
-	mov x4, 9
-	bl estrella
-	mov x1, 340
-	mov x2, 440
-	mov x4, 12
-	bl estrella
-
-	mov x1, 600
-	mov x2, 110
-	mov x4, 12
-	bl estrella
  //-------------------- END CODE ---------------------------//
 
 	mov x1, x19 
 	mov x2, x20 
 	mov x3, x21 
 	mov x4, x22 	
+
 	ldur x19 , [sp, #0]
 	ldur x20 , [sp, #8]
 	ldur x21 , [sp, #16]
