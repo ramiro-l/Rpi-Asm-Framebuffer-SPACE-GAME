@@ -673,7 +673,7 @@ fondoEstrellado:
 		sub x24, x24, 1
 		cbnz x24, kl
     mov x24, 1
-    add x2, x2, 50
+    add x2, x2, x23
 	bl estrella
 	sub x23, x23, 1
 	cbnz x23, lopi 
@@ -689,7 +689,7 @@ fondoEstrellado:
 
 	kll:
 	    add x1, x2, x1
-		add x1, x1, 30
+		add x1, x1, 70
 	    bl estrella
 		add x1, x2, x1
 		sub x24, x24, 1
