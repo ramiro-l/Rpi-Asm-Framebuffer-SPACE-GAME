@@ -28,38 +28,60 @@ Xzr       : 0
 */
 
 
-main:
-	// x0 = direccion base del framebuffer
-
+main: // x0 = direccion base del framebuffer
+	
 	/* Inicializacion */
 	
-	mov x20, x0 	// Guarda la dirección base del framebuffer en x20
-	
-	//-------------------- CODE MAIN ---------------------------//
+	mov x27, x0 	// Guarda la dirección base del framebuffer en x20
 
+	// Pintamos el fondo 
+								// arg: x0 = direct base del frame buffer
 	movz x1, 0x0E, lsl 16		
-	movk x1, 0x0E0E, lsl 00		//Color del fondo (gris oscuro)
-	bl pintarFondo 
+	movk x1, 0x0E0E, lsl 00		//Color del las estrellas
+	bl pintarFondo // pre: {}  args: (in x0 = direccion base del framebuffer, x1 = color del fondo)
 
-	mov x21, 150
-	mov x1, 320  // x
-	mov x2, 400  // y
+
+	// Configuracion GPIOS
 	
-	// NAVE EN MOVIMIENTO
- loop:   
-	bl fondoEstrellado 	// Se pinta el fondo con las estrellas
+	mov x26, GPIO_BASE
+	str wzr, [x26, GPIO_GPFSEL0] // Setea gpios 0 - 9 como lectura
+
+	//-------------------- CODE MAIN ---------------------------//
+	
+	            	// x0 = direct base del frame buffer
+	bl fondoEstrellado
+
+	            	// x0 = direct base del frame buffer
+	mov x1, 320 	// x
+	mov x2, 400 	// y
+	bl nave			// Dibuja la nave	
+
+    //-------------------- Tecla W ---------------------------//
+ InfLoop_W:
+
+	ldr w10, [x26, GPIO_GPLEV0]
+	lsr w11,w10, 1			
+	cmp w11, 1
+	b.ne InfLoop_W    	 		// if (x11 != 1) -> InfLoop_W
+
+    //-------------------- Tecla W ---------------------------//
+	
+	// NAVE EN MOVIMIENTO	
 	mov x1, 320  		// x
-	bl nave				// Dibuja la nave
+	bl borrar_nave		// Borra la nave
+	bl fondoEstrellado
 
 	sub x2, x2, 2  		// y - 1
+	bl nave				// Dibuja la nave avanzando dos pixeles
+
 	mov x1 , 13			// Setea el deley
 	bl deley			// Ejecuta el deley
 
-	sub x21, x21, 1
-	cbnz x21, loop
+	b InfLoop_W
+
 	//-------------------- END CODE MAIN -------------------------//
 
-endMain: 
+endMain:
 	b endMain
 
 // Herramientas basicas:
@@ -98,8 +120,8 @@ triangulo_punta_abajo:  // pre: {}    args: (in x0 = direccion base framebufer, 
 	stur x20 , [sp, #8]
 	stur x21 , [sp, #16]
 	stur x22 , [sp, #24]
-	stur x21 , [sp, #32]
-	stur x22 , [sp, #40]
+	stur x26 , [sp, #32]
+	stur x27 , [sp, #40]
 	stur lr , [sp, #48]
 
 	mov x21, x1 // x (cordenada)
@@ -147,8 +169,8 @@ triangulo_punta_abajo:  // pre: {}    args: (in x0 = direccion base framebufer, 
 	ldur x20 , [sp, #8]
 	ldur x21 , [sp, #16]
 	ldur x22 , [sp, #24]
-	ldur x21 , [sp, #32]
-	ldur x22 , [sp, #40]
+	ldur x26 , [sp, #32]
+	ldur x27 , [sp, #40]
 	ldur lr , [sp, #48]
 	add sp, sp , 56
 
@@ -162,8 +184,8 @@ triangulo_punta_arriba:  // pre: {}    args: (in x0 = direccion base framebufer,
 	stur x20 , [sp, #8]
 	stur x21 , [sp, #16]
 	stur x22 , [sp, #24]
-	stur x21 , [sp, #32]
-	stur x22 , [sp, #40]
+	stur x26 , [sp, #32]
+	stur x27 , [sp, #40]
 	stur lr , [sp, #48]
 
 	mov x21, x1 // x (cordenada)
@@ -209,8 +231,8 @@ triangulo_punta_arriba:  // pre: {}    args: (in x0 = direccion base framebufer,
 	ldur x20 , [sp, #8]
 	ldur x21 , [sp, #16]
 	ldur x22 , [sp, #24]
-	ldur x21 , [sp, #32]
-	ldur x22 , [sp, #40]
+	ldur x26 , [sp, #32]
+	ldur x27 , [sp, #40]
 	ldur lr , [sp, #48]
 	add sp, sp , 56
 
@@ -394,8 +416,8 @@ nave: 		// pre: { 0 <= x <= 480 && 0 <= y <= 640}   args: (in x0 = direccion bas
 
  //-------------------- CODE ---------------------------//
 
-	movz x21, 0xF5, lsl 16		//BLANCO
-	movk x21, 0xF5F5, lsl 00	//BLANCO (#F5F5F5)
+	movz x21, 0xDA, lsl 16		//BLANCO
+	movk x21, 0xDADA, lsl 00	//BLANCO (#F5F5F5)
 
 	movz x22, 0x1E, lsl 16		//AZUL
 	movk x22, 0x86F5, lsl 00	//AZUL (#1E86F5)
@@ -405,18 +427,6 @@ nave: 		// pre: { 0 <= x <= 480 && 0 <= y <= 640}   args: (in x0 = direccion bas
 
 	movz x24, 0xF7, lsl 16		//ROJO
 	movk x24, 0x3822, lsl 00	//ROJO (#F73822)
-
-	
-	//Rectangulo negro fondo
-						// arg: x0 = direccion base del framebuffer
-	add x9, x20, 21
-	mov x1,	x19 		// arg: x
-	mov x2,	x9			// arg: y
-	movz x3, 0x0E, lsl 16		
-	movk x3, 0x0E0E, lsl 00		//Color del fondo (gris oscuro)
-	mov x4, 75		    // arg: ancho
-	mov x5, 38			// arg: alto
-	bl rectangulo 
 
 	//Rectangulo central blanco
 						// arg: x0 = direccion base del framebuffer
@@ -522,6 +532,8 @@ nave: 		// pre: { 0 <= x <= 480 && 0 <= y <= 640}   args: (in x0 = direccion bas
 						// arg: X0 = direccion base del framebuffer
 	mov x1,	x9 			// arg: x
 	mov x2,	x10			// arg: y
+			 			// arg: x4 = ancho
+			 			// arg: x5 = alto
 	bl rectangulo
 
 
@@ -545,6 +557,8 @@ nave: 		// pre: { 0 <= x <= 480 && 0 <= y <= 640}   args: (in x0 = direccion bas
 						// arg: X0 = direccion base del framebuffer
 	mov x1,	x9 			// arg: x
 	mov x2,	x10			// arg: y
+			 			// arg: x4 = ancho
+			 			// arg: x5 = alto
 	bl rectangulo
 
 	//Rectangulo derecho mas chico naranja/rojo
@@ -567,6 +581,8 @@ nave: 		// pre: { 0 <= x <= 480 && 0 <= y <= 640}   args: (in x0 = direccion bas
 						// arg: X0 = direccion base del framebuffer
 	mov x1,	x9 			// arg: x
 	mov x2,	x10			// arg: y
+			 			// arg: x4 = ancho
+			 			// arg: x5 = alto
 	bl rectangulo
 
 	//Rectangulo abajo amarillo
@@ -613,6 +629,8 @@ nave: 		// pre: { 0 <= x <= 480 && 0 <= y <= 640}   args: (in x0 = direccion bas
 						// arg: direccion base del framebuffer
 	mov x1, x9 		    // arg: x
 	mov x2, x10			// arg: y
+			 			// arg: x4 = ancho
+			 			// arg: x5 = alto
 	bl rectangulo
 
  //-------------------- END CODE ---------------------------//
@@ -637,21 +655,227 @@ nave: 		// pre: { 0 <= x <= 480 && 0 <= y <= 640}   args: (in x0 = direccion bas
 
 endNave: br lr
 
-fondoEstrellado:
-	sub sp, sp , 40
+borrar_nave: 		// pre: { 0 <= x <= 480 && 0 <= y <= 640}   args: (in x0 = direccion base del framebuffer, x1 = x, x2 = y)         
+	sub sp, sp , 48
+	stur x19 , [sp, #0]
+	stur x20 , [sp, #8]
+	stur x25 , [sp, #16]
+	stur x26 , [sp, #24]
+	stur x27 , [sp, #32]
+	stur lr ,  [sp, #40]
+
+	mov x19, x1
+	mov x20, x2
+	mov x25, x3
+	mov x26, x4
+	mov x27, x5
+
+ //-------------------- CODE ---------------------------//
+
+	movz x3, 0x0E, lsl 16		//NEGRO
+	movk x3, 0x0E0E, lsl 00		//NEGRO (#0E0E0E)
+
+	//Rectangulo central blanco
+						// arg: x0 = direccion base del framebuffer
+	mov x1,	x19 		// arg: x
+	mov x2,	x20			// arg: y
+	             		// arg: x3 = color
+	mov x4, 24		    // arg: ancho
+	mov x5, 56			// arg: alto
+	bl rectangulo 
+
+	//Rectangulo superior azul
+	sub x9, x20, 30		// calculo: y - 30
+	
+					    // arg: x0 = direccion base del framebuffer
+	mov x1,	x19		    // arg: x
+	mov x2,	x9			// arg: y
+				  		// arg: x3 = color
+	mov x4, 24			// arg: ancho
+	mov x5, 6			// arg: alto
+	bl rectangulo 
+
+	//Triangulo Blanco superior
+	sub x9, x20, 40  	// calculo: y - 36 - 12
+
+						// arg: x0 = direccion base del framebuffer
+						// arg: x1 = x
+	mov x2,	x9			// arg: y    
+				        // arg: x3 = x3 = color
+	mov x4, 24			// arg: ancho
+			 			// arg: x5 = alto
+	bl triangulo_punta_arriba 
+ 
+	//Rectangulo central alargado
+	movz x9, 0xab, lsl 16		// GRIS
+	movk x9, 0xa3a2, lsl 00		// GRIS
+
+						// arg: X0 = direccion base del framebuffer
+	mov x1,	x19 		// arg: x
+	mov x2,	x20			// arg: y
+						// arg: x3 = color
+	mov x4, 60			// arg: ancho
+	mov x5, 6			// arg: alto
+	bl rectangulo  
+
+	//Rectangulo derecho
+	add x9, x19, 30		// calculo: x + 30
+	
+						// arg: X0 = direccion base del framebuffer
+	mov x1,	x9 		    // arg: x
+	mov x2,	x20			// arg: y
+						// arg: x3 = color
+	mov x4, 6			// arg: ancho
+	mov x5, 30			// arg: alto
+	bl rectangulo 
+   
+
+	//Rectangulo izquierdo
+	sub x9, x19, 30		// calculo: x - 30
+	
+						// arg: X0 = direccion base del framebuffer
+	mov x1,	x9 			// arg: x
+	mov x2,	x20			// arg: y
+			 			// arg: x3 = color
+	mov x4, 6			// arg: ancho
+	mov x5, 30			// arg: alto
+	bl rectangulo 
+
+ 	//Rectangulo derecho mas chico
+	add x9, x19, 18		// calculo: x + 18
+	
+						// arg: X0 = direccion base del framebuffer
+	mov x1,	x9 			// arg: x
+	mov x2,	x20			// arg: y
+			 			// arg: x3 = color
+	mov x4, 4			// arg: ancho
+	mov x5, 18		    // arg: alto
+	bl rectangulo 
+    
+	//Rectangulo izquierdo mas chico
+	sub x9, x19, 18		// calculo: x - 18
+
+						// arg: X0 = direccion base del framebuffer
+	mov x1,	x9 			// arg: x
+	mov x2,	x20			// arg: y
+			 			// arg: x3 = color
+			 			// arg: x4 = ancho
+			 			// arg: x5 = alto
+	bl rectangulo 
+
+
+	//Rectangulo derecho mas chico amarillo
+	add x9, x19, 30		// calculo: x + 30
+	add x10, x20, 15     // calculo y + 15
+
+						// arg: X0 = direccion base del framebuffer
+	mov x1,	x9 			// arg: x
+	mov x2,	x10			// arg: y
+			 			// arg: x3 = color
+	mov x4, 6			// arg: ancho
+	mov x5, 5			// arg: alto
+	bl rectangulo
+    
+
+	//Rectangulo izquierdo mas chico amarillo
+	sub x9, x19, 30		// calculo: x - 30
+	add x10, x20, 15    // calculo y + 15
+
+						// arg: X0 = direccion base del framebuffer
+	mov x1,	x9 			// arg: x
+	mov x2,	x10			// arg: y
+			 			// arg: x3 = color
+			 			// arg: x4 = ancho
+			 			// arg: x5 = alto
+	bl rectangulo
+
+	//Rectangulo derecho mas chico naranja/rojo
+	add x9, x19, 30		// calculo: x + 30
+	add x10, x20, 20     // calculo y + 20
+
+						// arg: X0 = direccion base del framebuffer
+	mov x1,	x9 			// arg: x
+	mov x2,	x10			// arg: y
+			 			// arg: x3 = color
+	mov x4, 6			// arg: ancho
+	mov x5, 6			// arg: alto
+	
+	bl rectangulo
+    
+	//Rectangulo izquierdo mas chico naranja/rojo
+	sub x9, x19, 30		// calculo: x - 30
+	add x10, x20, 20     // calculo y + 20
+
+						// arg: X0 = direccion base del framebuffer
+	mov x1,	x9 			// arg: x
+	mov x2,	x10			// arg: y
+			 			// arg: x3 = color
+			 			// arg: x4 = ancho
+			 			// arg: x5 = alto
+	bl rectangulo
+
+	//Rectangulo abajo amarillo
+	add x10, x20, 31    // calculo y + 31
+
+						// arg: X0 = direccion base del framebuffer
+	mov x1,	x19 		// arg: x
+	mov x2,	x10			// arg: y
+			 			// arg: x3 = color
+	mov x4, 22			// arg: ancho
+	mov x15, 6			// arg: alto
+	bl rectangulo
+	
+
+	//Rectangulo abajo naranja/rojo
+	add x10, x20, 36    // calculo y + 36
+
+						// arg: direccion base del framebuffer
+	mov x1,	x19 		// arg: x
+	mov x2,	x10			// arg: y
+			 			// arg: x3 = color
+	mov x4, 20			// arg: ancho
+	mov x5, 7			// arg: alto
+	bl rectangulo
+    
+
+ //-------------------- END CODE ---------------------------//
+
+	mov  x1, x19
+	mov  x2, x20
+	mov  x3, x25 
+	mov  x4, x26 
+	mov  x5, x27 
+
+	ldur x19 , [sp, #0]
+	ldur x20 , [sp, #8]
+	ldur x25 , [sp, #16]
+	ldur x26 , [sp, #24]
+	ldur x27 , [sp, #32]
+	ldur lr , [sp, #40]
+	add sp, sp , 48
+
+endborrar_Nave: br lr
+
+fondoEstrellado: // args: (in x0 = direccion base del framebuffer)
+	sub sp, sp , 64
 	stur x19 , [sp, #0]
 	stur x20 , [sp, #8]
 	stur x21 , [sp, #16]
 	stur x22 , [sp, #24]
-	stur lr , [sp, #32]
+	stur x23 , [sp, #32]
+	stur x24 , [sp, #40]
+	stur x25 , [sp, #48]
+	stur lr ,  [sp, #56]
+	
 	mov x19, x1
 	mov x20, x2
 	mov x21, x3
 	mov x22, x4
+	mov x25, x5
 	
 
  //-------------------- CODE ---------------------------//
-
+	
 	movz x3, 0xF3, lsl 16		
 	movk x3, 0xF3F3, lsl 00		//Color del las estrellas
     	
@@ -705,14 +929,18 @@ fondoEstrellado:
 	mov x1, x19 
 	mov x2, x20 
 	mov x3, x21 
-	mov x4, x22 	
+	mov x4, x22 
+	mov x5, x25	
 
 	ldur x19 , [sp, #0]
 	ldur x20 , [sp, #8]
 	ldur x21 , [sp, #16]
 	ldur x22 , [sp, #24]
-	ldur lr , [sp, #32]
-	add sp, sp , 40
+	ldur x23 , [sp, #32]
+	ldur x24 , [sp, #40]
+	ldur x25 , [sp, #48]
+	ldur lr ,  [sp, #56]
+	add sp, sp , 64
 endFondoEstrellado: br lr
 
 // HAY UN BUG PORQUE NO PUEDEN HABER ESTRELLAS DEBAJO DE LA NAVE
