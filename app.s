@@ -56,11 +56,14 @@ main: // x0 = direccion base del framebuffer
 	mov x2, 400 	// y
 	bl nave			// Dibuja la nave	
 
+	
+
     //-------------------- Tecla W ---------------------------//
  InfLoop_W:
 
 	ldr w10, [x26, GPIO_GPLEV0]
-	lsr w11,w10, 1			
+	lsr w11,w10, 1	
+	and w11, w11,1				// Mascara para comparar solo el primer bit	
 	cmp w11, 1
 	b.ne InfLoop_W    	 		// if (x11 != 1) -> InfLoop_W
 
