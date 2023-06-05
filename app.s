@@ -41,6 +41,27 @@ main: // x0 = direccion base del framebuffer
 	bl pintarFondo // pre: {}  args: (in x0 = direccion base del framebuffer, x1 = color del fondo)
 
 
+	mov x1, 100
+	mov x2, 200
+	movz x3, 0xF1, lsl 16		//AMARILLO
+	movk x3, 0xCE2D, lsl 00
+	mov x4, 40
+	bl circulo
+
+	mov x1, 500
+	mov x2, 270
+	movz x3, 0xa1, lsl 16		
+	movk x3, 0x1E80, lsl 00
+	mov x4, 20
+	bl circulo
+
+	mov x1, 320
+	mov x2, 100
+	movz x3, 0xc1, lsl 16		
+	movk x3, 0x1212, lsl 00
+	mov x4, 30
+	bl circulo
+
 	// Configuracion GPIOS
 	
 	mov x26, GPIO_BASE
@@ -55,6 +76,7 @@ main: // x0 = direccion base del framebuffer
 	mov x1, 320 	// x
 	mov x2, 400 	// y
 	bl nave			// Dibuja la nave	
+
 
 	
 
@@ -306,6 +328,131 @@ rectangulo: // pre: {}    args: (in x0 = direccion base framebufer, x1 = x, x2 =
 	add sp, sp , 56
 
 endRectangulo:	br lr
+
+circulo: // pre: {}    args: (in x0 = direccion base framebufer, x1 = x, x2 = y,  x3 = color,  x4 = radio)
+	/* Inicializacion */
+	sub sp, sp , 64
+	stur x21 , [sp, #0]
+	stur x22 , [sp, #8]
+	stur x23 , [sp, #16]
+	stur x24 , [sp, #24]
+	stur x25, [sp, #32]
+	stur x26 , [sp, #40]
+	stur x27 , [sp, #48]
+	stur lr , [sp, #56]
+	
+	//-------------------- CODE ---------------------------//
+	mov x25, x1		// posicion del framebufer x
+	mov x27, x2		// posicion del framebufer y
+	mov x21, x4  	// x  distancia incial del eje x al punto 
+	mov x22, x4  	// y  distancia inicial del eje y al punto
+	mov x23, x4  	// radio
+	mul x23, x23, x23   // radio*radio
+
+ ciclo1: 
+    sub x21, x21, 1
+	add x1, x1, 1
+    mul x24, x21, x21
+	mul x26, x22, x22
+	add x24, x24, x26 
+    cmp x24, x23 
+	b.gt ciclo1
+    bl p_pixel
+	cbnz x21, ciclo1  
+ 	mov x21, x4
+	mov x1, x25
+	add x2, x2, 1
+	sub x22, x22, 1
+	cbnz x22, ciclo1 
+   	 
+	lsl x9, x4, 1
+	add x1, x25, x9		// x = x + 2 * radio
+	mov x2, x27			// y = y
+	mov x21, x4
+	mov x22, x4
+
+ ciclo2: 
+    sub x21, x21, 1
+	sub x1, x1, 1
+    mul x24, x21, x21
+	mul x26, x22, x22
+	add x24, x24, x26 
+    cmp x24, x23 
+	b.gt ciclo2
+    bl p_pixel
+	cbnz x21, ciclo2
+ 	mov x21, x4
+	lsl x9, x4, 1
+	add x1, x25, x9		// x = x + 2 * radio
+	add x2, x2, 1
+	sub x22, x22, 1
+	cbnz x22, ciclo2 
+
+    
+	mov x1, x25
+	add x2, x2, x4
+	sub x2, x2, 1	// y = y + radio -1
+	mov x21, x4
+	mov x22, x4
+
+ ciclo3: 
+    sub x21, x21, 1
+	add x1, x1, 1
+    mul x24, x21, x21
+	mul x26, x22, x22
+	add x24, x24, x26 
+    cmp x24, x23 
+	b.gt ciclo3
+    bl p_pixel
+	cbnz x21, ciclo3
+ 	mov x21, x4
+	mov x1, x25			// = x
+	sub x2, x2, 1
+	sub x22, x22, 1
+	cbnz x22, ciclo3 
+
+
+
+    lsl x9, x4, 1
+	add x1, x25, x9		// x = x + 2 * radio
+	add x2, x2, x4
+	mov x21, x4
+	mov x22, x4
+
+ ciclo4: 
+    sub x21, x21, 1
+	sub x1, x1, 1
+    mul x24, x21, x21
+	mul x26, x22, x22
+	add x24, x24, x26 
+    cmp x24, x23 
+	b.gt ciclo4
+    bl p_pixel
+	cbnz x21, ciclo4
+ 	mov x21, x4
+	lsl x9, x4, 1
+	add x1, x25, x9		// x = x + 2 * radio
+	sub x2, x2, 1
+	sub x22, x22, 1
+	cbnz x22, ciclo4
+
+	//-------------------- END CODE -------------------------//
+	mov x1, x25 	
+	mov x2, x27 		
+	mov x4, x23   	
+
+	ldur x21 , [sp, #0]
+	ldur x22 , [sp, #8]
+	ldur x23 , [sp, #16]
+	ldur x24 , [sp, #24]
+	ldur x25, [sp, #32]
+	ldur x26 , [sp, #40]
+	ldur x27 , [sp, #48]
+	ldur lr , [sp, #56]
+	add sp, sp , 64
+
+endCirculo: br lr
+
 
 // Formas combinadas:
 
