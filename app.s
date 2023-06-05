@@ -41,27 +41,6 @@ main: // x0 = direccion base del framebuffer
 	bl pintarFondo // pre: {}  args: (in x0 = direccion base del framebuffer, x1 = color del fondo)
 
 
-	mov x1, 100
-	mov x2, 200
-	movz x3, 0xF1, lsl 16		//AMARILLO
-	movk x3, 0xCE2D, lsl 00
-	mov x4, 40
-	bl circulo
-
-	mov x1, 500
-	mov x2, 270
-	movz x3, 0xa1, lsl 16		
-	movk x3, 0x1E80, lsl 00
-	mov x4, 20
-	bl circulo
-
-	mov x1, 320
-	mov x2, 100
-	movz x3, 0xc1, lsl 16		
-	movk x3, 0x1212, lsl 00
-	mov x4, 30
-	bl circulo
-
 	// Configuracion GPIOS
 	
 	mov x26, GPIO_BASE
@@ -1073,6 +1052,29 @@ fondoEstrellado: // args: (in x0 = direccion base del framebuffer)
 	bl estrella
 	sub x23, x23, 1
 	cbnz x23, lopi2 
+
+
+	// -------------------PLANETAS------------------------//
+	mov x1, 100
+	mov x2, 190
+	movz x3, 0xc9, lsl 16		//AMARILLO
+	movk x3, 0x9039, lsl 00
+	mov x4, 40
+	bl circulo
+
+	mov x1, 530
+	mov x2, 280	
+	movz x3, 0x20, lsl 16		//ROSA
+	movk x3, 0x8FAF, lsl 00
+	mov x4, 20
+	bl circulo
+
+	mov x1, 325
+	mov x2, 115
+	movz x3, 0xc1, lsl 16		
+	movk x3, 0x1212, lsl 00		//ROJO
+	mov x4, 30
+	bl circulo
 
  //-------------------- END CODE ---------------------------//
 
