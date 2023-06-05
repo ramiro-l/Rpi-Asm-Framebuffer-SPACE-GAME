@@ -53,7 +53,7 @@ main: // x0 = direccion base del framebuffer
 
 	            	// x0 = direct base del frame buffer
 	mov x1, 320 	// x
-	mov x2, 400 	// y
+	mov x2, 320 	// y
 	bl nave			// Dibuja la nave	
 
 
@@ -76,12 +76,14 @@ main: // x0 = direccion base del framebuffer
 	bl fondoEstrellado
 
 	sub x2, x2, 2  		// y - 1
+	bl moduloWIDTH
+	bl moduloHEIGH
 	bl nave				// Dibuja la nave avanzando dos pixeles
 
 	mov x1 , 13			// Setea el deley
 	bl deley			// Ejecuta el deley
-	cmp x2, 50
-	b.hi InfLoop_W
+	//cmp x2, 50
+	b InfLoop_W
 
 	//-------------------- END CODE MAIN -------------------------//
 
@@ -112,6 +114,36 @@ p_pixel: // pre: { 0 <= x <= 480 && 0 <= y <= 640}    args: ( x0 = direccion bas
 	str w3, [x9,#0]
 	//-------------------- END CODE -------------------------//
 end_p_pixel: br lr
+
+moduloWIDTH: // pre: {}   args: (in/out x1 = eje x)
+	//-------------------- CODE ---------------------------//
+	cmp x1, 0					// if (x1 < 0) -> le sumo SCREEN_WIDTH
+	b.ge noCambiaWIDTH	
+	add x1, x1, SCREEN_WIDTH	//x1 = x1 + SCREEN_WIDTH
+ noCambiaWIDTH:					// else 
+	cmp x1, SCREEN_WIDTH		// if (x1 < SCREEN_WIDTH) -> termino
+	b.lt endModuloWIDTH	
+ loopModuloWIDTH:				// else
+	sub x1, x1, SCREEN_WIDTH	// x1 = x1 - SCREEN_WIDTH
+	cmp x1, SCREEN_WIDTH		// if (x1 >= SCREEN_WIDTH ) -> itero
+	b.ge loopModuloWIDTH		// else -> termino
+	//-------------------- END CODE -------------------------//
+endModuloWIDTH: br lr
+
+moduloHEIGH: // pre: {}   args: (in/out x2 = eje y)
+	//-------------------- CODE ---------------------------//
+	cmp x2, 0					// if (x2 < 0) -> le sumo SCREEN_HEIGH
+	b.ge noCambiaHEIGH	
+	add x2, x2, SCREEN_HEIGH	//x2 = x2 + SCREEN_HEIGH
+ noCambiaHEIGH:					// else 
+	cmp x2, SCREEN_HEIGH		// if (x2 < SCREEN_HEIGH) -> termino
+	b.lt endModuloHEIGH	
+ loopModuloHEIGH:				// else
+	sub x2, x2, SCREEN_HEIGH	// x2 = x2 - SCREEN_HEIGH
+	cmp x2, SCREEN_HEIGH		// x2 (x2 >= SCREEN_HEIGH ) -> itero
+	b.ge loopModuloHEIGH			// else -> termino
+	//-------------------- END CODE -------------------------//
+endModuloHEIGH: br lr
 
 // Formas basicas:
 
