@@ -40,7 +40,6 @@ main: // x0 = direccion base del framebuffer
 	movk x1, 0x0E0E, lsl 00		//Color del las estrellas
 	bl pintarFondo // pre: {}  args: (in x0 = direccion base del framebuffer, x1 = color del fondo)
 
-
 	// Configuracion GPIOS
 	
 	mov x26, GPIO_BASE
@@ -53,11 +52,8 @@ main: // x0 = direccion base del framebuffer
 
 	            	// x0 = direct base del frame buffer
 	mov x1, 320 	// x
-	mov x2, 320 	// y
+	mov x2, 400 	// y
 	bl nave			// Dibuja la nave	
-
-
-	
 
     //-------------------- Tecla W ---------------------------//
  InfLoop_W:
@@ -76,17 +72,13 @@ main: // x0 = direccion base del framebuffer
 	bl fondoEstrellado
 
 	sub x2, x2, 2  		// y - 1
-	bl moduloWIDTH
-	bl moduloHEIGH
 	bl nave				// Dibuja la nave avanzando dos pixeles
 
 	mov x1 , 13			// Setea el deley
 	bl deley			// Ejecuta el deley
-	//cmp x2, 50
 	b InfLoop_W
 
 	//-------------------- END CODE MAIN -------------------------//
-
 endMain:
 	b endMain
 
@@ -103,7 +95,15 @@ deley: // pre: {}    args: (in x1 = tamaño del deley)
 endDeley:	br lr 
 
 p_pixel: // pre: { 0 <= x <= 480 && 0 <= y <= 640}    args: ( x0 = direccion base del framebufer, x1 = x,  x2 = y, x3 = color )
+	sub sp, sp , 24
+	stur x19 , [sp, #0]
+	stur x20 , [sp, #8]
+	stur lr , [sp, #16]
+	mov x19, x1
+	mov x20, x2
 	//-------------------- CODE ---------------------------//
+	bl moduloWIDTH
+	bl moduloHEIGH
 	lsl x9, x1, 2 // x9 = x * 4
 	lsl x10, x2, 2 // x10 = y * 4
 	mov x11, SCREEN_WIDTH
@@ -113,20 +113,29 @@ p_pixel: // pre: { 0 <= x <= 480 && 0 <= y <= 640}    args: ( x0 = direccion bas
 
 	str w3, [x9,#0]
 	//-------------------- END CODE -------------------------//
+	mov x1, x19 
+	mov x2, x20 
+	ldur x19 , [sp, #0]
+	ldur x20 , [sp, #8]
+	ldur lr , [sp, #16]
+	add sp, sp , 24
 end_p_pixel: br lr
 
 moduloWIDTH: // pre: {}   args: (in/out x1 = eje x)
 	//-------------------- CODE ---------------------------//
 	cmp x1, 0					// if (x1 < 0) -> le sumo SCREEN_WIDTH
 	b.ge noCambiaWIDTH	
+ loopModuloWIDTH1:
 	add x1, x1, SCREEN_WIDTH	//x1 = x1 + SCREEN_WIDTH
+	cmp x1, 0
+	b.lt loopModuloWIDTH1	
  noCambiaWIDTH:					// else 
 	cmp x1, SCREEN_WIDTH		// if (x1 < SCREEN_WIDTH) -> termino
 	b.lt endModuloWIDTH	
- loopModuloWIDTH:				// else
+ loopModuloWIDTH2:				// else
 	sub x1, x1, SCREEN_WIDTH	// x1 = x1 - SCREEN_WIDTH
 	cmp x1, SCREEN_WIDTH		// if (x1 >= SCREEN_WIDTH ) -> itero
-	b.ge loopModuloWIDTH		// else -> termino
+	b.ge loopModuloWIDTH2		// else -> termino
 	//-------------------- END CODE -------------------------//
 endModuloWIDTH: br lr
 
@@ -134,14 +143,17 @@ moduloHEIGH: // pre: {}   args: (in/out x2 = eje y)
 	//-------------------- CODE ---------------------------//
 	cmp x2, 0					// if (x2 < 0) -> le sumo SCREEN_HEIGH
 	b.ge noCambiaHEIGH	
+ loopModuloHEIGH1:
 	add x2, x2, SCREEN_HEIGH	//x2 = x2 + SCREEN_HEIGH
- noCambiaHEIGH:					// else 
+	cmp x2, 0
+	b.lt loopModuloHEIGH1	
+ noCambiaHEIGH:				// else 
 	cmp x2, SCREEN_HEIGH		// if (x2 < SCREEN_HEIGH) -> termino
 	b.lt endModuloHEIGH	
- loopModuloHEIGH:				// else
+ loopModuloHEIGH2:				// else
 	sub x2, x2, SCREEN_HEIGH	// x2 = x2 - SCREEN_HEIGH
 	cmp x2, SCREEN_HEIGH		// x2 (x2 >= SCREEN_HEIGH ) -> itero
-	b.ge loopModuloHEIGH			// else -> termino
+	b.ge loopModuloHEIGH2			// else -> termino
 	//-------------------- END CODE -------------------------//
 endModuloHEIGH: br lr
 
@@ -463,7 +475,6 @@ circulo: // pre: {}    args: (in x0 = direccion base framebufer, x1 = x, x2 = y,
 	add sp, sp , 64
 
 endCirculo: br lr
-
 
 // Formas combinadas:
 
@@ -1126,8 +1137,6 @@ fondoEstrellado: // args: (in x0 = direccion base del framebuffer)
 	ldur lr ,  [sp, #56]
 	add sp, sp , 64
 endFondoEstrellado: br lr
-
-// HAY UN BUG PORQUE NO PUEDEN HABER ESTRELLAS DEBAJO DE LA NAVE
 
 Error: // Nunca se deberia ejecutar esto
 		b Error
