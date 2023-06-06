@@ -56,38 +56,76 @@ main: // x0 = direccion base del framebuffer
 	mov x2, 320 	// y
 	bl nave			// Dibuja la nave	
 
-
-	
-
     //-------------------- Tecla W ---------------------------//
- InfLoop_W:
+  InfLoop_TECLAS:
         bl nave
-        mov x29, x1
-        mov x1 , 13			// Setea el deley
+        mov x25, x1
+        mov x1 , 13				// Setea el deley
 	bl deley
-	mov x1, x29
+	mov x1, x25
 	ldr w10, [x26, GPIO_GPLEV0]
-	lsr w11,w10, 1	
-	and w11, w11,1				// Mascara para comparar solo el primer bit	
+	lsr w11,w10, 1					// Tecla w
+	and w11, w11,0b1				// Mascara para comparar solo el primer bit	
 	cmp w11, 1
-	b.ne InfLoop_W    	 		// if (x11 != 1) -> InfLoop_W
+	b.eq w
+	lsr w11,w10, 2					// Tecla a
+	and w11, w11,1					// Mascara para comparar solo el primer bit	
+	cmp w11, 1
+	b.eq a
+	lsr w11,w10, 3					// Tecla s
+	and w11, w11,1					// Mascara para comparar solo el primer bit	
+	cmp w11, 1
+	b.eq s
+	lsr w11,w10, 4					// Tecla d
+	and w11, w11,1					// Mascara para comparar solo el primer bit	
+	cmp w11, 1
+	b.eq d			
+	b  InfLoop_TECLAS    	 		// if (x11 != 1) -> InfLoop_W
 
     //-------------------- Tecla W ---------------------------//
 	
-	// NAVE EN MOVIMIENTO	
-	mov x1, 320  		// x
-	bl borrar_nave		// Borra la nave
+	// MOVER LA NAVE
+w:	bl borrar_nave		// Borra la nave
 	bl fondoEstrellado
-
 	sub x2, x2, 2	// y - 1
 	bl nave				// Dibuja la nave avanzando dos pixeles
-    mov x29, x1
+    mov x25, x1
 	mov x1 , 13			// Setea el deley
 	bl deley			// Ejecuta el deley
-	mov x1, x29
-	b InfLoop_W
+	mov x1, x25
+	b InfLoop_TECLAS
+a:	bl borrar_nave		// Borra la nave
+	bl fondoEstrellado
 
+	sub x1, x1, 2		// x - 2
+	bl nave				// Dibuja la nave avanzando dos pixeles
+    mov x25, x1
+	mov x1 , 13			// Setea el deley
+	bl deley			// Ejecuta el deley
+	mov x1, x25
+	b InfLoop_TECLAS
+s:	bl borrar_nave		// Borra la nave
+	bl fondoEstrellado
+
+	add x2, x2, 2		// x + 2
+	bl nave				// Dibuja la nave avanzando dos pixeles
+    mov x25, x1
+	mov x1 , 13			// Setea el deley
+	bl deley			// Ejecuta el deley
+	mov x1, x25
+	b InfLoop_TECLAS
+d:	bl borrar_nave		// Borra la nave
+	bl fondoEstrellado
+
+	add x1, x1, 2		// x - 2
+	bl nave				// Dibuja la nave avanzando dos pixeles
+    mov x25, x1
+	mov x1 , 13			// Setea el deley
+	bl deley			// Ejecuta el deley
+	mov x1, x25
+	b InfLoop_TECLAS
 	//-------------------- END CODE MAIN -------------------------//
+
 
 endMain:
 	b endMain
@@ -96,7 +134,6 @@ endMain:
 
 deley: // pre: {}    args: (in x1 = tamaño del deley)
 	//-------------------- CODE ---------------------------//
-	
 	mov x9, DELEY_VALUE
 	lsl x9, x9, x1
  deley_loop:   	
@@ -580,7 +617,7 @@ estrella: // pre: {}    args: (in x0 = direccion base del framebuffer, x1 = x, x
 endEstrella: br lr
 
 nave: 		// pre: { 0 <= x <= 480 && 0 <= y <= 640}   args: (in x0 = direccion base del framebuffer, x1 = x, x2 = y)         
-	sub sp, sp , 88
+	sub sp, sp , 80
 	stur x19 , [sp, #0]
 	stur x20 , [sp, #8]
 	stur x21 , [sp, #16]
@@ -590,15 +627,13 @@ nave: 		// pre: { 0 <= x <= 480 && 0 <= y <= 640}   args: (in x0 = direccion bas
 	stur x25 , [sp, #48]
 	stur x26 , [sp, #56]
 	stur x27 , [sp, #64]
-	stur x28 , [sp, #72]
-	stur lr , [sp, #80]
+	stur lr , [sp, #72]
 
 	mov x19, x1
 	mov x20, x2
 	mov x25, x3
 	mov x26, x4
 	mov x27, x5
-	mov x28, x6
 
  //-------------------- CODE ---------------------------//
 
@@ -613,9 +648,7 @@ nave: 		// pre: { 0 <= x <= 480 && 0 <= y <= 640}   args: (in x0 = direccion bas
 
 	movz x24, 0xF7, lsl 16		//ROJO
 	movk x24, 0x3822, lsl 00	//ROJO (#F73822)
-        
-    movz x28, 0x0E, lsl 16		//NEGRO
-	movk x28, 0x0E0E, lsl 00	//NEGRO (#0E0E0E)
+
 	//Rectangulo central blanco
 						// arg: x0 = direccion base del framebuffer
 	mov x1,	x19 		// arg: x
@@ -655,6 +688,17 @@ nave: 		// pre: { 0 <= x <= 480 && 0 <= y <= 640}   args: (in x0 = direccion bas
 	mov x2,	x20			// arg: y
 	mov x3, x9			// arg: color
 	mov x4, 60			// arg: ancho
+	mov x5, 6			// arg: alto
+	bl rectangulo  
+	
+	movz x9, 0xab, lsl 16		// GRIS
+	movk x9, 0xa3a2, lsl 00		// GRIS
+
+						// arg: X0 = direccion base del framebuffer
+	mov x1,	x19 		// arg: x
+	mov x2,	x20			// arg: y
+	mov x3, x21			// arg: color
+	mov x4, 24			// arg: ancho
 	mov x5, 6			// arg: alto
 	bl rectangulo  
 
@@ -780,44 +824,11 @@ nave: 		// pre: { 0 <= x <= 480 && 0 <= y <= 640}   args: (in x0 = direccion bas
 						// arg: X0 = direccion base del framebuffer
 	mov x1,	x19 		// arg: x
 	mov x2,	x10			// arg: y
-    mov x3, x23 		// arg: color
+        mov x3, x23 		// arg: color
 	mov x4, 22			// arg: ancho
 	mov x15, 6			// arg: alto
 	bl rectangulo
 	
-
-	//Rectangulo abajo naranja/rojo
-	add x10, x20, 36    // calculo y + 36
-
-		
-  first:  
-    cbz x6, snd 						// arg: direccion base del framebuffer
-	mov x1,	x19 		// arg: x
-	mov x2,	x10			// arg: y
-	mov x3, x24 		// arg: color
-	mov x4, 20			// arg: ancho
-	mov x5, 5			// arg: alto
-	bl rectangulo
-	sub x6, x6, x6
-	b out
-	
-  snd:
-        cbnz x6, out
- 	add x10, x20, 38    // calculo y + 36
-
-  		// arg: direccion base del framebuffer
-	mov x1,	x19 		// arg: x
-	mov x2,	x10			// arg: y
-	mov x3, x24 		// arg: color
-	mov x4, 20			// arg: ancho
-	mov x5, 8			// arg: alto
-	add x6, x6, 1
-	bl rectangulo
-	mov x3, x28
-	bl rectangulo
-	
-  out:
-
 
     //Rectangulo derecho mas chico azul
 	add x9, x19, 18		// calculo: x + 18
@@ -842,6 +853,31 @@ nave: 		// pre: { 0 <= x <= 480 && 0 <= y <= 640}   args: (in x0 = direccion bas
 			 			// arg: x4 = ancho
 			 			// arg: x5 = alto
 	bl rectangulo
+       
+    //Rectangulo abajo naranja/rojo             Esta es la parte del fuego
+
+    add x10, x20, 38   // calculo y + 36
+
+  					// arg: direccion base del framebuffer
+	mov x1,	x19 		// arg: x
+	mov x2,	x10			// arg: y
+	mov x3, x24 		// arg: color
+	mov x4, 20			// arg: ancho
+	mov x5, 8			// arg: alto
+	add x6, x6, 1
+	bl rectangulo
+	mov x27, x1
+    mov x1 , 13				// Setea el deley
+	bl deley
+	mov x1, x27
+	add x10, x20, 42
+	mov x2,	x10 
+	mov x5, 8
+	movz x3, 0x0E, lsl 16			//NEGRO
+	movk x3, 0x0E0E, lsl 00			//NEGRO (#0E0E0E)
+	bl rectangulo                 // un pedazo de rectangulo negro del rectangulo rojo dibujado anteriormente 
+	
+
 
  //-------------------- END CODE ---------------------------//
 
@@ -860,9 +896,8 @@ nave: 		// pre: { 0 <= x <= 480 && 0 <= y <= 640}   args: (in x0 = direccion bas
 	ldur x25 , [sp, #48]
 	ldur x26 , [sp, #56]
 	ldur x27 , [sp, #64]
-	ldur x28 , [sp, #72]
-	ldur lr , [sp, #80]
-	add sp, sp , 88
+	ldur lr , [sp, #72]
+	add sp, sp , 80
 
 endNave: br lr
 
@@ -1045,7 +1080,7 @@ borrar_nave: 		// pre: { 0 <= x <= 480 && 0 <= y <= 640}   args: (in x0 = direcc
 	mov x2,	x10			// arg: y
 			 			// arg: x3 = color
 	mov x4, 20			// arg: ancho
-	mov x5, 10			// arg: alto
+	mov x5, 20			// arg: alto
 	bl rectangulo
     
 
@@ -1176,8 +1211,6 @@ fondoEstrellado: // args: (in x0 = direccion base del framebuffer)
 	ldur lr ,  [sp, #56]
 	add sp, sp , 64
 endFondoEstrellado: br lr
-
-// HAY UN BUG PORQUE NO PUEDEN HABER ESTRELLAS DEBAJO DE LA NAVE
 
 Error: // Nunca se deberia ejecutar esto
 		b Error
