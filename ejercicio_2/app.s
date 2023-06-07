@@ -6,9 +6,11 @@
 		.equ GPIO_GPFSEL0, 0x00
 		.equ GPIO_GPLEV0,  0x34
 
-		.equ DELEY_VALUE, 400
+		.equ DELEY_VALUE, 1000
 
 		.equ SEMILLA, 700
+
+		.equ AVANCE, 2
 
 		.globl main
 
@@ -38,9 +40,7 @@ main: // x0 = direccion base del framebuffer
 
 	// Pintamos el fondo 
 								// arg: x0 = direct base del frame buffer
-	movz x1, 0x0E, lsl 16		
-	movk x1, 0x0E0E, lsl 00		//Color del las estrellas
-	bl pintarFondo // pre: {}  args: (in x0 = direccion base del framebuffer, x1 = color del fondo)
+	bl pintarFondo // pre: {}  args: (in x0 = direccion base del framebuffer)
 
 
 	// Configuracion GPIOS
@@ -52,6 +52,8 @@ main: // x0 = direccion base del framebuffer
 	
 	            	// arg: x0 = direct base del frame buffer
 	mov x7, xzr		// arg: semilla y
+	movz x3, 0xDA, lsl 16		//BLANCO
+	movk x3, 0xDADA, lsl 00		//BLANCO (#F5F5F5)
 	bl fondoDinamico
 
 	            	// x0 = direct base del frame buffer
@@ -89,7 +91,7 @@ main: // x0 = direccion base del framebuffer
 	
 	// MOVER LA NAVE
  w:	bl borrar_nave		// Borra la nave
- 	mov x7, xzr		// arg: semilla y
+ 	mov x7, xzr			// arg: semilla y
 	bl fondoDinamico
 	sub x2, x2, 2	// y - 1
 	bl nave				// Dibuja la nave avanzando dos pixeles
@@ -534,52 +536,31 @@ endCirculo: br lr
 
 // Formas combinadas:
 
-pintarFondo: // pre: {}  args: (in x0 = direccion base del framebuffer, x1 = color del fondo)
+pintarFondo: // pre: {}  args: (in x0 = direccion base del framebuffer)
 
 	/* Inicializacion */
-	sub sp, sp , 48
+	sub sp, sp , 8
 	stur x19 , [sp, #0]
-	stur x20 , [sp, #8]
-	stur x21 , [sp, #16]
-	stur x22 , [sp, #24]
-	stur x23 , [sp, #32]
-	stur lr , [sp, #40]
-
-	mov x19, x1
-	mov x20, x2
-	mov x21, x3
-	mov x22, x4
-	mov x23, x5
+	mov x19, x0
 	//-------------------- CODE ---------------------------//
-
-	mov x9, SCREEN_WIDTH  // x
-	lsr x9, x9, 1		  // x
-	mov x10, SCREEN_HEIGH // y
-	lsr x10, x10, 1		  // y
-
-	mov x1, x9            // arg: x
-	mov x2, x10           // arg: y
-	mov x3, x19 		  // arg: color
-	mov x4, SCREEN_WIDTH  // arg: ancho
-	mov x5, SCREEN_HEIGH  // arg: alto
-	bl rectangulo 		  // construimos el rectangulo que ocupa toda la pantalla
-
+	movz x9, 0x0E0E, lsl 48
+	movk x9, 0x0E0E, lsl 32
+	movk x9, 0x0E0E, lsl 16		
+	movk x9, 0x0E0E, lsl 00			//Color del fondo
+	mov x10, SCREEN_WIDTH
+	mov x11, SCREEN_HEIGH
+	mul x10, x10 ,x11 				// x*y
+ loopPintarFondo:
+	stur x9, [x0, #0]
+	add x0, x0, 8
+	sub x10, x10, 1
+	cbnz x10, loopPintarFondo
 	//-------------------- END CODE -------------------------//
 
-	mov x1, x19
-	mov x2, x20 
-	mov x3, x21 
-	mov x4, x22 
-	mov x5, x23 
+	mov x0, x19
 
 	ldur x19 , [sp, #0]
-	ldur x20 , [sp, #8]
-	ldur x21 , [sp, #16]
-	ldur x22 , [sp, #24]
-	ldur x23 , [sp, #32]
-	ldur lr , [sp, #40]
-
-	add sp, sp , 48
+	add sp, sp , 8
 endPintarFondo:	br lr
 
 estrella: // pre: {}    args: (in x0 = direccion base del framebuffer, x1 = x, x2 = y, x3 = color, x4 = ancho)
@@ -879,6 +860,7 @@ nave: 		//  pre: {}  args: (in x0 = direccion base del framebuffer, x1 = x, x2 =
 	mov x1, x27
 	add x10, x20, 42
 	mov x2,	x10 
+	mov x4, 20			// arg: ancho
 	mov x5, 8
 	movz x3, 0x0E, lsl 16			//NEGRO
 	movk x3, 0x0E0E, lsl 00			//NEGRO (#0E0E0E)
@@ -928,31 +910,21 @@ borrar_nave: 		// pre: {}  args: (in x0 = direccion base del framebuffer, x1 = x
 	movz x3, 0x0E, lsl 16		//NEGRO
 	movk x3, 0x0E0E, lsl 00		//NEGRO (#0E0E0E)
 
+
 	//Rectangulo central blanco
 						// arg: x0 = direccion base del framebuffer
-	mov x1,	x19 		// arg: x
-	mov x2,	x20			// arg: y
+	mov x1,	x19   		// arg: x
+	sub x2,	x20	, 3		// arg: y
 	             		// arg: x3 = color
 	mov x4, 24		    // arg: ancho
-	mov x5, 56			// arg: alto
-	bl rectangulo 
-
-	//Rectangulo superior azul
-	sub x9, x20, 30		// calculo: y - 30
-	
-					    // arg: x0 = direccion base del framebuffer
-	mov x1,	x19		    // arg: x
-	mov x2,	x9			// arg: y
-				  		// arg: x3 = color
-	mov x4, 24			// arg: ancho
-	mov x5, 6			// arg: alto
-	bl rectangulo 
+	mov x5, 64			// arg: alto
+	bl rectangulo   
 
 	//Triangulo Blanco superior
 	sub x9, x20, 40  	// calculo: y - 36 - 12
 
 						// arg: x0 = direccion base del framebuffer
-						// arg: x1 = x
+	mov x1,	x19					// arg: x1 = x
 	mov x2,	x9			// arg: y    
 				        // arg: x3 = x3 = color
 	mov x4, 24			// arg: ancho
@@ -960,16 +932,22 @@ borrar_nave: 		// pre: {}  args: (in x0 = direccion base del framebuffer, x1 = x
 	bl triangulo_punta_arriba 
  
 	//Rectangulo central alargado
-	movz x9, 0xab, lsl 16		// GRIS
-	movk x9, 0xa3a2, lsl 00		// GRIS
-
 						// arg: X0 = direccion base del framebuffer
-	mov x1,	x19 		// arg: x
+	sub x1,	x19, 20 	// arg: x
 	mov x2,	x20			// arg: y
 						// arg: x3 = color
-	mov x4, 60			// arg: ancho
+	mov x4, 16			// arg: ancho
 	mov x5, 6			// arg: alto
-	bl rectangulo  
+	bl rectangulo 
+
+	//Rectangulo central alargado
+						// arg: X0 = direccion base del framebuffer
+	add x1,	x19, 20 	// arg: x
+	mov x2,	x20			// arg: y
+						// arg: x3 = color
+	mov x4, 16			// arg: ancho
+	mov x5, 6			// arg: alto
+	bl rectangulo   
 
 	//Rectangulo derecho
 	add x9, x19, 30		// calculo: x + 30
@@ -1161,32 +1139,31 @@ fondoPlanetas: // pre: {} args: (in x0 = direccion base del framebuffer)
 	add sp, sp , 32
 endFondoPlanetas: br lr
 
-// FIXME: poner que pase el color asi podemos cambiar entre blanco y negro para pintar y borrar
-fondoEstrellado: // pre: {} args: (in x0 = direccion base del framebuffer, x1 = semilla x, x2 = semilla y, x3 = numero de estrellas, x4 = Desplazamiento vertical)
+fondoEstrellado: // pre: {} args: (in x0 = direccion base del framebuffer, x1 = semilla x, x2 = semilla y, x3 = color, x4 = numero de estrellas, x5 = Desplazamiento vertical)
 	sub sp, sp , 48
 	stur x19 , [sp, #0]
 	stur x20 , [sp, #8]
-	stur x21 , [sp, #16]
-	stur x22 , [sp, #24]
-	stur x23 , [sp, #32]
+	stur x22 , [sp, #16]
+	stur x23 , [sp, #24]
+	stur x24 , [sp, #32]
 	stur lr ,  [sp, #40]
 	
 	// x0 no lo modificamos asi que no hace falta guardarlo
 	mov x19, x1 // semilla x 
 	mov x20, x2 // semilla y 
-	mov x21, x3 // n de estrellas    
-	mov x22, x5 // desplazamiento del eje y
+	// x3 (color) no lo modificamos asi que no lo guardamos
+	mov x22, x4 // n de estrellas  
+	mov x23, x5 // desplazamiento del eje y
 
  //-------------------- CODE ---------------------------//
-	mov x23, x21 		// x23 sera donde guardaremos el contador de estrellas que quedan por dibujar
+	mov x24, x22 		// x24 sera donde guardaremos el contador de estrellas que quedan por dibujar
 
  // Estrellas //
  RecEstrellas:
 
-	cbz x22, dibestrella // Saltamos a dibestrella si no debemos modificar el y
-	
+	cbz x23, dibestrella // Saltamos a dibestrella si no debemos modificar el y
 	// calculamos el desplazamiento vertical del eje y
-	mov x9, x22 // desplazamiento del eje y
+	mov x9, x23 // desplazamiento del eje y
     aa:
  		add x2, x2, SCREEN_WIDTH
 		sub x9, x9, 1
@@ -1198,20 +1175,20 @@ fondoEstrellado: // pre: {} args: (in x0 = direccion base del framebuffer, x1 = 
 		        	// arg: x0 = direc base del frame buffer
     				// arg: x1 = x
 					// arg: x2 = y
-		movz x3, 0xF3, lsl 16		
-	    movk x3, 0xF3F3, lsl 00	// arg: Color del las estrellas (0xF3F3F3)
+					// arg: x3 = color
 		mov x4, 8	// arg: ancho
 		bl estrella 
 
 
 	// Calculamos x e y de la proxima estrella
 	mov x9, 4 //contador
+	//mov x2, x20								/////// ESTO AGREGO EL MATI
 	lk:
-	    sub x1, x1, x23
+	    sub x1, x1, x24
 		add x2, x2, x1
 		lsl x1, x1, x9
 		add x1, x1, 13
-		add x2, x23, x2
+		add x2, x24, x2
 		add x1, x2, x1
 
 		sub x9, x9, 1
@@ -1220,77 +1197,79 @@ fondoEstrellado: // pre: {} args: (in x0 = direccion base del framebuffer, x1 = 
 	bl moduloHEIGH
 	bl moduloWIDTH
 
-	sub x23, x23, 1 // numero de estrellas - 1
+	sub x24, x24, 1 // numero de estrellas - 1
 
 	// Dibujamos la proxima estrella
 
 	        	// arg: x0 = direc base del frame buffer
 				// arg: x1 = semilla x
 				// arg: x2 = semilla y
-				// arg: x23 = numero de estrellas
-				// arg: x4 = numero de planetas
+				// arg: x3 = color
+				// arg: x24 = numero de estrellas
 				// arg: x5 = Desplazamiento vertical
-	cbnz x23, RecEstrellas 
+	cbnz x24, RecEstrellas 
 
  //-------------------- END CODE ---------------------------//
 	mov x1, x19 
 	mov x2, x20 
-	mov x3, x21 
 	mov x4, x22 
+	mov x5, x23
 
 	ldur x19 , [sp, #0]
 	ldur x20 , [sp, #8]
-	ldur x21 , [sp, #16]
-	ldur x22 , [sp, #24]
-	ldur x23 , [sp, #32]
+	ldur x22 , [sp, #16]
+	ldur x23 , [sp, #24]
+	ldur x24 , [sp, #32]
 	ldur lr ,  [sp, #40]
 	add sp, sp , 48
 endFondoEstrellado: br lr
 
 // FIXME: poner que pase el color asi podemos cambiar entre blanco y negro para pintar y borrar
-fondoDinamico: // pre: {} args: (in x0 = direccion base del framebuffer, x7 = Desplazamiento vertical)
+fondoDinamico: // pre: {} args: (in x0 = direccion base del framebuffer, x3 = color, x7 = Desplazamiento vertical)
 	sub sp, sp , 40
 	stur x19 , [sp, #0]
 	stur x20 , [sp, #8]
-	stur x21 , [sp, #16]
-	stur x22 , [sp, #24]
+	stur x22 , [sp, #16]
+	stur x23 , [sp, #24]
 	stur lr , [sp, #32]
 
 	mov x19, x1 
 	mov x20, x2
-	mov x21, x3 
+	// x3 no se modifica
 	mov x22, x4
+	mov x23, x7
 	//-------------------- CODE -------------------------------//
 	
 	mov x9, SEMILLA
-	lsr x9, x9, 1
 		            	// arg: x0 = direct base del frame buffer
 	add x1, x9, 89		// arg: semilla x
 	add x2, x9, 34		// arg: semilla y
-	mov x3, 50	    	// arg: numero de estrellas 
-	mov x4, x7			// arg: Desplazamiento vertical
-	bl fondoEstrellado
+	// color
+	mov x4, 50	    	// arg: numero de estrellas 
+	mov x5, x23			// arg: Desplazamiento vertical
+	bl fondoEstrellado 
 
 	mov x9, SEMILLA
 	lsr x9, x9, 1
 						// arg: x0 = direct base del frame buffer
 	add x1, x9, 21		// arg: semilla x
 	add x2, x9, 34		// arg: semilla y  
-	mov x3, 50	    	// arg: numero de estrellas 
-	add x4, x7, 71		// arg: Desplazamiento vertical
-	bl fondoEstrellado
+	//color
+	mov x4, 50	    	// arg: numero de estrellas 
+	add x5, x23, 71		// arg: Desplazamiento vertical
+	bl fondoEstrellado 
 
 	bl fondoPlanetas	//Pintamos los planetas
 	//-------------------- END CODE ---------------------------//
 	mov x1, x19 
 	mov x2, x20
-	mov x3, x21 
 	mov x4, x22
+	mov x7, x23
 
 	ldur x19 , [sp, #0]
 	ldur x20 , [sp, #8]
-	ldur x21 , [sp, #16]
-	ldur x22 , [sp, #24]
+	ldur x22 , [sp, #16]
+	ldur x23 , [sp, #24]
 	ldur lr , [sp, #32]
 		
 	add sp, sp , 40
