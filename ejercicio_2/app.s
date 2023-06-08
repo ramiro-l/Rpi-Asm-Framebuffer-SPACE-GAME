@@ -78,6 +78,9 @@ main: // x0 = direccion base del framebuffer
 	                // arg: x3 = Color del las estrellas 
  	mov x7, x23		// arg: desplazamiento vertical
 	bl fondoDinamico
+					// arg: x0 = direct base del frame buffer
+					// arg: x7 = desplazamiento vertical
+	bl borrarPlanetas
 
 	//Dibujamos las estrellas:
 	add x23, x23, 1 // y de estrellas + 1 (estrellas 1 pixel mas abajo)
@@ -1210,6 +1213,61 @@ fondoPlanetas: // pre: {} args: (in x0 = direccion base del framebuffer, x7 = De
 		
 	add sp, sp , 32
 endFondoPlanetas: br lr
+
+borrarPlanetas: // pre: {} args: (in x0 = direccion base del framebuffer, x7 = Desplazamiento vertical)
+	sub sp, sp , 32
+	stur x19 , [sp, #0]
+	stur x20 , [sp, #8]
+	stur x21 , [sp, #16]
+	stur lr , [sp, #24]
+
+	mov x19, x1 
+	mov x20, x2
+	mov x21, x7
+	mov x22, x3 
+	lsl x21, x21, 1
+	//-------------------- CODE ---------------------------//
+			    // arg: x0 = direc base del frame buffer
+	mov x1, 50	// arg: x
+	mov x2, 17	// arg: y
+	movz x3, 0x0E, lsl 16		//NEGRO
+	movk x3, 0x0E0E, lsl 00		//NEGRO (#0E0E0E)
+	mov x4, 16	// arg: ancho
+
+
+
+	mov x1, 100
+	mov x2, 190
+	add x2, x2, x21	
+	mov x4, 40
+	bl circulo
+
+	mov x1, 530
+	mov x2, 280
+	add x2, x2, x21	
+	mov x4, 20
+	bl circulo
+
+	mov x1, 325
+	mov x2, 115
+	add x2, x2, x21
+	mov x4, 30
+	bl circulo
+	
+	//-------------------- END CODE ---------------------------//
+
+	mov x1, x19 
+	mov x2, x20
+	mov x3, x22
+	mov x7, x21
+
+	ldur x19 , [sp, #0]
+	ldur x20 , [sp, #8]
+	ldur x21 , [sp, #16]
+	ldur lr , [sp, #24]
+		
+	add sp, sp , 32
+endBorrarPlanetas: br lr
 
 fondoEstrellado: // pre: {} args: (in x0 = direccion base del framebuffer, x1 = semilla X, x2 = semilla Y, x3 = color, x4 = numero de estrellas, x5 = Desplazamiento vertical)
 	sub sp, sp , 56
