@@ -6,15 +6,16 @@
 		.equ GPIO_GPFSEL0, 0x00
 		.equ GPIO_GPLEV0,  0x34
 
-		.equ DELEY_VALUE, 700
+		// Variables para cambiar el dibujo
+		.equ SEMILLA, 2023			// Si cambias la semilla se generan estrellas en otras posiciones
 
-		.equ SEMILLA, 743
+		// Estos 3 valores hay que editarlos dependiendo donde se ejecuta el programa
+		.equ DELEY_VALUE, 700		// Si aumentas este numero, el deley es mas lento
+		.equ AVANCE_DE_LA_NAVE, 2	// Este numero indica cuando pixels se desplaza la nave al moverse
 
-		.equ AVANCE_DE_LA_NAVE, 2
-
+		//Variable globar - (recomendable no tocar)
 		.equ VELOCIDAD_NORMAL, 13 // Sin accionar la barra espaciadora         (Cuanto mayor es mas lento va)
-		.equ VELOCIDAD_RAPIDA, 5  // Al haber accionado la barra espaciadora   (Cuanto menor es mas rapido va)
-
+		.equ VELOCIDAD_RAPIDA, 2  // Al haber accionado la barra espaciadora   (Cuanto menor es mas rapido va)
 		.globl main
 
 
@@ -144,7 +145,7 @@ main: // x0 = direccion base del framebuffer
 	cmp x24, VELOCIDAD_NORMAL
 	b.eq es_VELOCIDAD_NORMAL
 
-	mov x24, VELOCIDAD_NORMAL// si esVELOCIDAD_RAPIDA, lo ponemos en VELOCIDAD_NORMAL
+	mov x24, VELOCIDAD_NORMAL// si es VELOCIDAD_RAPIDA, lo ponemos en VELOCIDAD_NORMAL
 	b InfLoop_TECLAS
 
    es_VELOCIDAD_NORMAL: // si es VELOCIDAD_NORMAL, lo ponemos en VELOCIDAD_RAPIDA
@@ -1254,7 +1255,7 @@ fondoEstrellado: // pre: {} args: (in x0 = direccion base del framebuffer, x1 = 
 	    sub x1, x1, x24
 		add x2, x2, x1
 		lsl x1, x1, x9
-		add x1, x1, 13
+		add x1, x1, 71
 		add x2, x24, x2
 		add x1, x2, x1
 
@@ -1311,16 +1312,16 @@ fondoDinamico: // pre: {} args: (in x0 = direccion base del framebuffer, x3 = co
 	add x1, x9, 13		// arg: semilla x
 	add x2, x9, 34		// arg: semilla y
 						// arg: x3 = color
-	mov x4, 50	    	// arg: numero de estrellas 
+	mov x4, 40	    	// arg: numero de estrellas 
 	mov x5, x21			// arg: Desplazamiento vertical
 	bl fondoEstrellado 
 
 	mov x9, SEMILLA
 						// arg: x0 = direct base del frame buffer
 	add x1, x9, 21		// arg: semilla x
-	add x2, x9, 55		// arg: semilla y  
+	add x2, x9, 71		// arg: semilla y  
 						// arg: x3 = color
-	mov x4, 50	    	// arg: numero de estrellas 
+	mov x4, 40	    	// arg: numero de estrellas 
 	mov x5, x21		    // arg: Desplazamiento vertical
 	bl fondoEstrellado 
 
