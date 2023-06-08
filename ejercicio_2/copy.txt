@@ -6,33 +6,30 @@
 		.equ GPIO_GPFSEL0, 0x00
 		.equ GPIO_GPLEV0,  0x34
 
-		.equ DELEY_VALUE, 700
+		.equ DELEY_VALUE, 1000
 
-		.equ SEMILLA, 743
+		.equ SEMILLA, 700
 
-		.equ AVANCE_DE_LA_NAVE, 2
-
-		.equ VELOCIDAD_NORMAL, 13 // Sin accionar la barra espaciadora         (Cuanto mayor es mas lento va)
-		.equ VELOCIDAD_RAPIDA, 5  // Al haber accionado la barra espaciadora   (Cuanto menor es mas rapido va)
+		.equ AVANCE, 2
 
 		.globl main
 
 
 //------------------------------------ CODE HERE ------------------------------------//
 
- /*
- X0...X7   : argumentos/resultados
- X8        : ...
- X9...x15  : Temporales
- X16       : IP0
- X17       : IP1
- X18       : ...
- X19...X27 : Saved
- X28       : SP
- X29       : FP
- X30       : LR
- Xzr       : 0
- */
+/*
+X0...X7   : argumentos/resultados
+X8        : ...
+X9...x15  : Temporales
+X16       : IP0
+X17       : IP1
+X18       : ...
+X19...X27 : Saved
+X28       : SP
+X29       : FP
+X30       : LR
+Xzr       : 0
+*/
 
 
 main: // x0 = direccion base del framebuffer
@@ -41,184 +38,108 @@ main: // x0 = direccion base del framebuffer
 	
 	mov x27, x0 	// Guarda la dirección base del framebuffer en x20
 
+	// Pintamos el fondo 
+								// arg: x0 = direct base del frame buffer
+	bl pintarFondo // pre: {}  args: (in x0 = direccion base del framebuffer)
+
+
 	// Configuracion GPIOS
 	
 	mov x26, GPIO_BASE
 	str wzr, [x26, GPIO_GPFSEL0] // Setea gpios 0 - 9 como lectura
 
-	// Pintamos el fondo 
-				// arg: x0 = direct base del frame buffer
-	bl pintarFondo 
-
-	////--------------------// CODE MAIN //---------------------------////
+	//-------------------- CODE MAIN ---------------------------//
 	
-	mov x23, xzr                                  	// inicializamos posicion Y de las estrellas
-	mov x24, VELOCIDAD_NORMAL			// inicializamos el delay
-
 	            	// arg: x0 = direct base del frame buffer
-	movz x3, 0xF3, lsl 16	// arg: Color del las estrellas 	
-	movk x3, 0xF3F3, lsl 00 // Color del las estrellas (0xF3F3F3)
-	mov x7, x23		// arg: desplazamiento vertical 
+	mov x7, xzr		// arg: semilla y
+	movz x3, 0xDA, lsl 16		//BLANCO
+	movk x3, 0xDADA, lsl 00		//BLANCO (#F5F5F5)
 	bl fondoDinamico
 
 	            	// x0 = direct base del frame buffer
 	mov x1, 320 	// x
 	mov x2, 320 	// y
-	mov x3, x24
 	bl nave			// Dibuja la nave	
 
- InfLoop_TECLAS:
-   //-------------------- Animacion ---------------------------//
-
-	// Borramos las estrellas:
-	movz x3, 0x0E, lsl 16		//NEGRO
-	movk x3, 0x0E0E, lsl 00		//NEGRO (#0E0E0E)
-	                // arg: x0 = direct base del frame buffer
-	                // arg: x3 = Color del las estrellas 
- 	mov x7, x23		// arg: desplazamiento vertical
-	bl fondoDinamico
-
-	//Dibujamos las estrellas:
-	add x23, x23, 1 // y de estrellas + 1 (estrellas 1 pixel mas abajo)
-
-	movz x3, 0xF3, lsl 16		
-	movk x3, 0xF3F3, lsl 00 // Color del las estrellas (0xF3F3F3)
-                	// arg: x0 = direct base del frame buffer
-	                // arg: Color del las estrellas 
- 	mov x7, x23		// arg: desplazamiento vertical
-	bl fondoDinamico
-
-	//Dibujamos la nave
-	mov x3, x24
-    bl nave
-
-	// Deley
-	mov x25, x1
-    mov x1 , x24				// Setea el deley
+    //-------------------- Tecla W ---------------------------//
+  InfLoop_TECLAS:
+        bl nave
+        mov x25, x1
+        mov x1 , 13				// Setea el deley
 	bl deley
-
-   //-------------------- Control de Teclas ---------------------------//
-
 	mov x1, x25
 	ldr w10, [x26, GPIO_GPLEV0]
-	
 	lsr w11,w10, 1					// Tecla w
 	and w11, w11,0b1				// Mascara para comparar solo el primer bit	
 	cmp w11, 1
 	b.eq w
-	
 	lsr w11,w10, 2					// Tecla a
 	and w11, w11,1					// Mascara para comparar solo el primer bit	
 	cmp w11, 1
 	b.eq a
-	
 	lsr w11,w10, 3					// Tecla s
 	and w11, w11,1					// Mascara para comparar solo el primer bit	
 	cmp w11, 1
 	b.eq s
-	
 	lsr w11,w10, 4					// Tecla d
 	and w11, w11,1					// Mascara para comparar solo el primer bit	
 	cmp w11, 1
-	b.eq d		
-	
-	
-	
-	
-	lsr w11,w10, 5					// Tecla Barra espaciadora
-	and w11, w11,1					// Mascara para comparar solo el primer bit	
-	cmp w11, 1
-	b.eq ep
+	b.eq d			
+	b  InfLoop_TECLAS    	 		// if (x11 != 1) -> InfLoop_W
 
-	mov x19, xzr
-    b   InfLoop_TECLAS    	 		// if (x11 != 1) ->  InfLoop_TECLAS
-
- //-------------------- Teclas en accion ---------------------------//
-
-	// MAS PROPULSION DE LA NAVE
-  ep:		
-	cmp x19, 1
-	b.eq InfLoop_TECLAS
-
-	mov x19, x11
-	cmp x24, VELOCIDAD_NORMAL
-	b.eq es_VELOCIDAD_NORMAL
-
-	mov x24, VELOCIDAD_NORMAL// si esVELOCIDAD_RAPIDA, lo ponemos en VELOCIDAD_NORMAL
-	b InfLoop_TECLAS
-
-   es_VELOCIDAD_NORMAL: // si es VELOCIDAD_NORMAL, lo ponemos en VELOCIDAD_RAPIDA
-	mov x24, VELOCIDAD_RAPIDA
-	b InfLoop_TECLAS
-
+    //-------------------- Tecla W ---------------------------//
 	
 	// MOVER LA NAVE
-  w:	bl borrar_nave		// Borra la nave
-
-	sub x2, x2, AVANCE_DE_LA_NAVE	    // y - AVANCE_DE_LA_NAVE
-	mov x3, x24
-	bl nave				// Dibuja la nave avanzando AVANCE_DE_LA_NAVE pixeles
+ w:	bl borrar_nave		// Borra la nave
+ 	mov x7, xzr			// arg: semilla y
+	bl fondoDinamico
+	sub x2, x2, 2	// y - 1
+	bl nave				// Dibuja la nave avanzando dos pixeles
     mov x25, x1
+	mov x1 , 13			// Setea el deley
+	bl deley			// Ejecuta el deley
+	mov x1, x25
 	b InfLoop_TECLAS
+ a:	bl borrar_nave		// Borra la nave
+	mov x7, xzr		// arg: semilla y
+	bl fondoDinamico
 
-  a:	bl borrar_nave	// Borra la nave
-
-	sub x1, x1, AVANCE_DE_LA_NAVE		// x - AVANCE_DE_LA_NAVE
-	mov x3, x24
-	bl nave				// Dibuja la nave avanzando AVANCE_DE_LA_NAVE pixeles
+	sub x1, x1, 2		// x - 2
+	bl nave				// Dibuja la nave avanzando dos pixeles
     mov x25, x1
+	mov x1 , 13			// Setea el deley
+	bl deley			// Ejecuta el deley
+	mov x1, x25
 	b InfLoop_TECLAS
+ s:	bl borrar_nave		// Borra la nave
+	mov x7, xzr		// arg: semilla y
+	bl fondoDinamico
 
-  s:	bl borrar_nave		// Borra la nave
-
-	add x2, x2, AVANCE_DE_LA_NAVE		// x + AVANCE_DE_LA_NAVE
-	mov x3, x24
-	bl nave				// Dibuja la nave avanzando AVANCE_DE_LA_NAVE pixeles
+	add x2, x2, 2		// x + 2
+	bl nave				// Dibuja la nave avanzando dos pixeles
     mov x25, x1
+	mov x1 , 13			// Setea el deley
+	bl deley			// Ejecuta el deley
+	mov x1, x25
 	b InfLoop_TECLAS
+ d:	bl borrar_nave		// Borra la nave
+ 	mov x7, xzr		// arg: semilla y
+	bl fondoDinamico
 
-  d:	bl borrar_nave		// Borra la nave
-
-	add x1, x1, AVANCE_DE_LA_NAVE	// x - AVANCE_DE_LA_NAVE
-	mov x3, x24
-	bl nave				// Dibuja la nave avanzando AVANCE_DE_LA_NAVE pixeles
+	add x1, x1, 2		// x - 2
+	bl nave				// Dibuja la nave avanzando dos pixeles
     mov x25, x1
+	mov x1 , 13			// Setea el deley
+	bl deley			// Ejecuta el deley
+	mov x1, x25
 	b InfLoop_TECLAS
+	//-------------------- END CODE MAIN -------------------------//
 
-	////--------------------// END CODE MAIN //---------------------------////
 
 endMain:
 	b endMain
 
 // Herramientas basicas:
-
-pintarFondo: // pre: {}  args: (in x0 = direccion base del framebuffer)
-
-	/* Inicializacion */
-	sub sp, sp , 8
-	stur x19 , [sp, #0]
-	mov x19, x0
-	//-------------------- CODE ---------------------------//
-	movz x9, 0x0E0E, lsl 48
-	movk x9, 0x0E0E, lsl 32
-	movk x9, 0x0E0E, lsl 16		
-	movk x9, 0x0E0E, lsl 00			//Color del fondo
-	mov x10, SCREEN_WIDTH
-	mov x11, SCREEN_HEIGH
-	mul x10, x10 ,x11 				// x*y
-	lsr x10, x10, 1
- loopPintarFondo:
-	stur x9, [x0, #0]
-	add x0, x0, 8
-	sub x10, x10, 1
-	cbnz x10, loopPintarFondo
-	//-------------------- END CODE -------------------------//
-
-	mov x0, x19
-
-	ldur x19 , [sp, #0]
-	add sp, sp , 8
-endPintarFondo:	br lr
 
 deley: // pre: {}    args: (in x1 = tamaño del deley)
 	//-------------------- CODE ---------------------------//
@@ -615,6 +536,33 @@ endCirculo: br lr
 
 // Formas combinadas:
 
+pintarFondo: // pre: {}  args: (in x0 = direccion base del framebuffer)
+
+	/* Inicializacion */
+	sub sp, sp , 8
+	stur x19 , [sp, #0]
+	mov x19, x0
+	//-------------------- CODE ---------------------------//
+	movz x9, 0x0E0E, lsl 48
+	movk x9, 0x0E0E, lsl 32
+	movk x9, 0x0E0E, lsl 16		
+	movk x9, 0x0E0E, lsl 00			//Color del fondo
+	mov x10, SCREEN_WIDTH
+	mov x11, SCREEN_HEIGH
+	mul x10, x10 ,x11 				// x*y
+ loopPintarFondo:
+	stur x9, [x0, #0]
+	add x0, x0, 8
+	sub x10, x10, 1
+	cbnz x10, loopPintarFondo
+	//-------------------- END CODE -------------------------//
+
+	mov x0, x19
+
+	ldur x19 , [sp, #0]
+	add sp, sp , 8
+endPintarFondo:	br lr
+
 estrella: // pre: {}    args: (in x0 = direccion base del framebuffer, x1 = x, x2 = y, x3 = color, x4 = ancho)
 
 	sub sp, sp , 24
@@ -656,7 +604,7 @@ estrella: // pre: {}    args: (in x0 = direccion base del framebuffer, x1 = x, x
 
 endEstrella: br lr
 
-nave: 		//  pre: {}  args: (in x0 = direccion base del framebuffer, x1 = x, x2 = y, x3 = Numero de color del fuego)
+nave: 		//  pre: {}  args: (in x0 = direccion base del framebuffer, x1 = x, x2 = y)         
 	sub sp, sp , 80
 	stur x19 , [sp, #0]
 	stur x20 , [sp, #8]
@@ -896,25 +844,12 @@ nave: 		//  pre: {}  args: (in x0 = direccion base del framebuffer, x1 = x, x2 =
        
     //Rectangulo abajo naranja/rojo             Esta es la parte del fuego
 
-	// Extraemos los colores:
-
     add x10, x20, 38   // calculo y + 36
 
-	cmp x25, VELOCIDAD_NORMAL
-	b.eq normal
-
-	movz x9, 0xb3, lsl 16		//AZUL
-	movk x9, 0x1cd5, lsl 00	    //AZUL (#1E86F5)
-
-	b 12
-    normal: 
-		movz x9, 0xFF, lsl 16		//ROJO
-	 	movk x9, 0x0909, lsl 00	    //ROJO (#F73822)
-
-  						// arg: direccion base del framebuffer
+  					// arg: direccion base del framebuffer
 	mov x1,	x19 		// arg: x
 	mov x2,	x10			// arg: y
-	mov x3, x9 		// arg: color
+	mov x3, x24 		// arg: color
 	mov x4, 20			// arg: ancho
 	mov x5, 8			// arg: alto
 	add x6, x6, 1
@@ -1152,7 +1087,7 @@ borrar_nave: 		// pre: {}  args: (in x0 = direccion base del framebuffer, x1 = x
 
 endborrar_Nave: br lr
 
-fondoPlanetas: // pre: {} args: (in x0 = direccion base del framebuffer, x7 = Desplazamiento vertical)
+fondoPlanetas: // pre: {} args: (in x0 = direccion base del framebuffer)
 	sub sp, sp , 32
 	stur x19 , [sp, #0]
 	stur x20 , [sp, #8]
@@ -1161,9 +1096,7 @@ fondoPlanetas: // pre: {} args: (in x0 = direccion base del framebuffer, x7 = De
 
 	mov x19, x1 
 	mov x20, x2
-	mov x21, x7
-	mov x22, x3 
-	lsl x21, x21, 1
+	mov x21, x3 
 	//-------------------- CODE ---------------------------//
 			    // arg: x0 = direc base del frame buffer
 	mov x1, 50	// arg: x
@@ -1173,15 +1106,13 @@ fondoPlanetas: // pre: {} args: (in x0 = direccion base del framebuffer, x7 = De
 
 	mov x1, 100
 	mov x2, 190
-	add x2, x2, x21	
 	movz x3, 0xc9, lsl 16		//AMARILLO
 	movk x3, 0x9039, lsl 00
 	mov x4, 40
 	bl circulo
 
 	mov x1, 530
-	mov x2, 280
-	add x2, x2, x21	
+	mov x2, 280	
 	movz x3, 0x20, lsl 16		//ROSA
 	movk x3, 0x8FAF, lsl 00
 	mov x4, 20
@@ -1189,7 +1120,6 @@ fondoPlanetas: // pre: {} args: (in x0 = direccion base del framebuffer, x7 = De
 
 	mov x1, 325
 	mov x2, 115
-	add x2, x2, x21
 	movz x3, 0xc1, lsl 16		
 	movk x3, 0x1212, lsl 00		//ROJO
 	mov x4, 30
@@ -1199,8 +1129,7 @@ fondoPlanetas: // pre: {} args: (in x0 = direccion base del framebuffer, x7 = De
 
 	mov x1, x19 
 	mov x2, x20
-	mov x3, x22
-	mov x7, x21
+	mov x3, x21 
 
 	ldur x19 , [sp, #0]
 	ldur x20 , [sp, #8]
@@ -1210,23 +1139,21 @@ fondoPlanetas: // pre: {} args: (in x0 = direccion base del framebuffer, x7 = De
 	add sp, sp , 32
 endFondoPlanetas: br lr
 
-fondoEstrellado: // pre: {} args: (in x0 = direccion base del framebuffer, x1 = semilla X, x2 = semilla Y, x3 = color, x4 = numero de estrellas, x5 = Desplazamiento vertical)
-	sub sp, sp , 56
+fondoEstrellado: // pre: {} args: (in x0 = direccion base del framebuffer, x1 = semilla x, x2 = semilla y, x3 = color, x4 = numero de estrellas, x5 = Desplazamiento vertical)
+	sub sp, sp , 48
 	stur x19 , [sp, #0]
 	stur x20 , [sp, #8]
-	// x21 borrado
 	stur x22 , [sp, #16]
 	stur x23 , [sp, #24]
 	stur x24 , [sp, #32]
-	stur x25 , [sp, #40]
-	stur lr ,  [sp, #48]
+	stur lr ,  [sp, #40]
 	
 	// x0 no lo modificamos asi que no hace falta guardarlo
-	mov x19, x1 // semilla X
-	mov x20, x2 // semilla Y
+	mov x19, x1 // semilla x 
+	mov x20, x2 // semilla y 
 	// x3 (color) no lo modificamos asi que no lo guardamos
 	mov x22, x4 // n de estrellas  
-	mov x23, x5 // desplazamiento del eje Y
+	mov x23, x5 // desplazamiento del eje y
 
  //-------------------- CODE ---------------------------//
 	mov x24, x22 		// x24 sera donde guardaremos el contador de estrellas que quedan por dibujar
@@ -1234,22 +1161,28 @@ fondoEstrellado: // pre: {} args: (in x0 = direccion base del framebuffer, x1 = 
  // Estrellas //
  RecEstrellas:
 
-	// calculamos el desplazamiento vertical del eje Y
-	mov x25, x2 // rescatamos posicion Y original antes de modificarlo
-	add x2, x2, x23
+	cbz x23, dibestrella // Saltamos a dibestrella si no debemos modificar el y
+	// calculamos el desplazamiento vertical del eje y
+	mov x9, x23 // desplazamiento del eje y
+    aa:
+ 		add x2, x2, SCREEN_WIDTH
+		sub x9, x9, 1
+		cbnz x9, aa
  
+
 	// dibujamos la estrella
+    dibestrella: 
 		        	// arg: x0 = direc base del frame buffer
     				// arg: x1 = x
 					// arg: x2 = y
 					// arg: x3 = color
-	mov x4, 8		// arg: ancho
-	bl estrella 
-	
-    mov x2, x25 // recuperamos el valor de y original por si y_mas_abajo lo modifico
+		mov x4, 8	// arg: ancho
+		bl estrella 
+
 
 	// Calculamos x e y de la proxima estrella
 	mov x9, 4 //contador
+	//mov x2, x20								/////// ESTO AGREGO EL MATI
 	lk:
 	    sub x1, x1, x24
 		add x2, x2, x1
@@ -1268,12 +1201,12 @@ fondoEstrellado: // pre: {} args: (in x0 = direccion base del framebuffer, x1 = 
 
 	// Dibujamos la proxima estrella
 
-	        	// "arg": x0 = direc base del frame buffer
-				// "arg": x1 = semilla x
-				// "arg": x2 = semilla y
-				// "arg": x3 = color
-				// "arg": x24 = numero de estrellas
-				// "arg": x5 = Desplazamiento vertical
+	        	// arg: x0 = direc base del frame buffer
+				// arg: x1 = semilla x
+				// arg: x2 = semilla y
+				// arg: x3 = color
+				// arg: x24 = numero de estrellas
+				// arg: x5 = Desplazamiento vertical
 	cbnz x24, RecEstrellas 
 
  //-------------------- END CODE ---------------------------//
@@ -1287,60 +1220,61 @@ fondoEstrellado: // pre: {} args: (in x0 = direccion base del framebuffer, x1 = 
 	ldur x22 , [sp, #16]
 	ldur x23 , [sp, #24]
 	ldur x24 , [sp, #32]
-	ldur x25 , [sp, #40]
-	ldur lr ,  [sp, #48]
-	add sp, sp , 56
+	ldur lr ,  [sp, #40]
+	add sp, sp , 48
 endFondoEstrellado: br lr
 
+// FIXME: poner que pase el color asi podemos cambiar entre blanco y negro para pintar y borrar
 fondoDinamico: // pre: {} args: (in x0 = direccion base del framebuffer, x3 = color, x7 = Desplazamiento vertical)
-	sub sp, sp , 32
+	sub sp, sp , 40
 	stur x19 , [sp, #0]
 	stur x20 , [sp, #8]
-	stur x21 , [sp, #16]
-	stur lr , [sp, #24]
+	stur x22 , [sp, #16]
+	stur x23 , [sp, #24]
+	stur lr , [sp, #32]
 
 	mov x19, x1 
 	mov x20, x2
 	// x3 no se modifica
-	mov x21, x7
+	mov x22, x4
+	mov x23, x7
 	//-------------------- CODE -------------------------------//
 	
 	mov x9, SEMILLA
-	add x9, x9, 367
 		            	// arg: x0 = direct base del frame buffer
-	add x1, x9, 13		// arg: semilla x
+	add x1, x9, 89		// arg: semilla x
 	add x2, x9, 34		// arg: semilla y
-						// arg: x3 = color
+	// color
 	mov x4, 50	    	// arg: numero de estrellas 
-	mov x5, x21			// arg: Desplazamiento vertical
+	mov x5, x23			// arg: Desplazamiento vertical
 	bl fondoEstrellado 
 
 	mov x9, SEMILLA
+	lsr x9, x9, 1
 						// arg: x0 = direct base del frame buffer
 	add x1, x9, 21		// arg: semilla x
-	add x2, x9, 55		// arg: semilla y  
-						// arg: x3 = color
+	add x2, x9, 34		// arg: semilla y  
+	//color
 	mov x4, 50	    	// arg: numero de estrellas 
-	mov x5, x21		    // arg: Desplazamiento vertical
+	add x5, x23, 71		// arg: Desplazamiento vertical
 	bl fondoEstrellado 
 
-						// arg: x0 = direct base del frame buffer
-						// arg: x7 = Desplazamiento vertical
 	bl fondoPlanetas	//Pintamos los planetas
 	//-------------------- END CODE ---------------------------//
 	mov x1, x19 
 	mov x2, x20
-	mov x7, x21
+	mov x4, x22
+	mov x7, x23
 
 	ldur x19 , [sp, #0]
 	ldur x20 , [sp, #8]
-	ldur x21 , [sp, #16]
-	ldur lr , [sp, #24]
+	ldur x22 , [sp, #16]
+	ldur x23 , [sp, #24]
+	ldur lr , [sp, #32]
 		
-	add sp, sp , 32
+	add sp, sp , 40
 endFondoDinamico: br lr
 
 Error: // Nunca se deberia ejecutar esto
-		b Error
 		b Error
 		
