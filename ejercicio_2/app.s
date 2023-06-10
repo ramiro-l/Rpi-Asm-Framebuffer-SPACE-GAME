@@ -10,11 +10,11 @@
 		.equ SEMILLA, 2023			// Si cambias la semilla se generan estrellas en otras posiciones
 
 		// Estos 3 valores hay que editarlos dependiendo donde se ejecuta el programa
-		.equ DELEY_VALUE, 800		// Si aumentas este numero, el deley es mas lento
-		.equ AVANCE_DE_LA_NAVE, 4	// Este numero indica cuando pixels se desplaza la nave al moverse
+		.equ DELEY_VALUE, 1000		// Si aumentas este numero, el deley es mas lento
+		.equ AVANCE_DE_LA_NAVE, 3	// Este numero indica cuando pixels se desplaza la nave al moverse
 
 		//Variable globar - (recomendable no tocar)
-		.equ VELOCIDAD_NORMAL, 13 // Sin accionar la barra espaciadora         (Cuanto mayor es mas lento va)
+		.equ VELOCIDAD_NORMAL, 12 // Sin accionar la barra espaciadora         (Cuanto mayor es mas lento va)
 		.equ VELOCIDAD_RAPIDA, 2  // Al haber accionado la barra espaciadora   (Cuanto menor es mas rapido va)
 		.globl main
 
@@ -84,7 +84,10 @@ main: // x0 = direccion base del framebuffer
 
 	//Dibujamos las estrellas:
 	add x23, x23, 1 // y de estrellas + 1 (estrellas 1 pixel mas abajo)
-
+	cmp x24, VELOCIDAD_NORMAL
+	b.eq 8
+	add x23,x23, 2
+	
 	movz x3, 0xF3, lsl 16		
 	movk x3, 0xF3F3, lsl 00 // Color del las estrellas (0xF3F3F3)
                 	// arg: x0 = direct base del frame buffer
@@ -105,6 +108,9 @@ main: // x0 = direccion base del framebuffer
 
 	mov x1, x25
 	ldr w10, [x26, GPIO_GPLEV0]
+
+	cmp x24, VELOCIDAD_NORMAL
+	b.ne trubo
 	
 	lsr w11,w10, 1					// Tecla w
 	and w11, w11,0b1				// Mascara para comparar solo el primer bit	
@@ -125,7 +131,7 @@ main: // x0 = direccion base del framebuffer
 	and w11, w11,1					// Mascara para comparar solo el primer bit	
 	cmp w11, 1
 	b.eq d		
-	
+ trubo:	
 	lsr w11,w10, 5					// Tecla Barra espaciadora
 	and w11, w11,1					// Mascara para comparar solo el primer bit	
 	cmp w11, 1
@@ -989,13 +995,13 @@ nave: 		//  pre: {}  args: (in x0 = direccion base del framebuffer, x1 = x, x2 =
 	cmp x25, VELOCIDAD_NORMAL
 	b.eq normal
 
-	movz x9, 0xb3, lsl 16		//AZUL
-	movk x9, 0x1cd5, lsl 00	    //AZUL (#1E86F5)
+	movz x9, 0xb3, lsl 16		//VIOLETA
+	movk x9, 0x1cd5, lsl 00	    //VIOLETA (#1E86F5)
 
 	b 12
     normal: 
 		movz x9, 0xFF, lsl 16		//ROJO
-	 	movk x9, 0x0909, lsl 00	    //ROJO (#F73822)
+	 	movk x9, 0x3822, lsl 00	    //ROJO (#F73822)
 
   						// arg: direccion base del framebuffer
 	mov x1,	x19 		// arg: x
