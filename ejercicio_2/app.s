@@ -10,8 +10,8 @@
 		.equ SEMILLA, 2023			// Si cambias la semilla se generan estrellas en otras posiciones
 
 		// Estos 3 valores hay que editarlos dependiendo donde se ejecuta el programa
-		.equ DELEY_VALUE, 700		// Si aumentas este numero, el deley es mas lento
-		.equ AVANCE_DE_LA_NAVE, 2	// Este numero indica cuando pixels se desplaza la nave al moverse
+		.equ DELEY_VALUE, 800		// Si aumentas este numero, el deley es mas lento
+		.equ AVANCE_DE_LA_NAVE, 4	// Este numero indica cuando pixels se desplaza la nave al moverse
 
 		//Variable globar - (recomendable no tocar)
 		.equ VELOCIDAD_NORMAL, 13 // Sin accionar la barra espaciadora         (Cuanto mayor es mas lento va)
@@ -54,7 +54,7 @@ main: // x0 = direccion base del framebuffer
 	////--------------------// CODE MAIN //---------------------------////
 	
 	mov x23, xzr                                  	// inicializamos posicion Y de las estrellas
-	mov x24, VELOCIDAD_NORMAL			// inicializamos el delay
+	mov x24, VELOCIDAD_NORMAL						// inicializamos el delay
 
 	            	// arg: x0 = direct base del frame buffer
 	movz x3, 0xF3, lsl 16	// arg: Color del las estrellas 	
@@ -126,9 +126,6 @@ main: // x0 = direccion base del framebuffer
 	cmp w11, 1
 	b.eq d		
 	
-	
-	
-	
 	lsr w11,w10, 5					// Tecla Barra espaciadora
 	and w11, w11,1					// Mascara para comparar solo el primer bit	
 	cmp w11, 1
@@ -141,17 +138,16 @@ main: // x0 = direccion base del framebuffer
 
 	// MAS PROPULSION DE LA NAVE
   ep:		
-	cmp x19, 1
-	b.eq InfLoop_TECLAS
+	cbnz x19, InfLoop_TECLAS
 
 	mov x19, x11
 	cmp x24, VELOCIDAD_NORMAL
 	b.eq es_VELOCIDAD_NORMAL
 
-	mov x24, VELOCIDAD_NORMAL// si es VELOCIDAD_RAPIDA, lo ponemos en VELOCIDAD_NORMAL
+	mov x24, VELOCIDAD_NORMAL		// si es VELOCIDAD_RAPIDA, lo ponemos en VELOCIDAD_NORMAL
 	b InfLoop_TECLAS
 
-   es_VELOCIDAD_NORMAL: // si es VELOCIDAD_NORMAL, lo ponemos en VELOCIDAD_RAPIDA
+   es_VELOCIDAD_NORMAL: 			// si es VELOCIDAD_NORMAL, lo ponemos en VELOCIDAD_RAPIDA
 	mov x24, VELOCIDAD_RAPIDA
 	b InfLoop_TECLAS
 
@@ -494,6 +490,141 @@ endRectangulo:	br lr
 
 circulo: // pre: {}    args: (in x0 = direccion base framebufer, x1 = x, x2 = y,  x3 = color,  x4 = radio)
 	/* Inicializacion */
+	sub sp, sp , 72
+	stur x21 , [sp, #0]
+	stur x22 , [sp, #8]
+	stur x23 , [sp, #16]
+	stur x24 , [sp, #24]
+	stur x25, [sp, #32]
+	stur x26 , [sp, #40]
+	stur x27 , [sp, #48]
+	stur x20 , [sp, #56]
+	stur lr , [sp, #64]
+	
+	//-------------------- CODE ---------------------------//
+	mov x25, x1		// posicion del framebufer x
+	mov x27, x2		// posicion del framebufer y
+	mov x21, x4  	// x  distancia incial del eje x al punto 
+	mov x22, x4  	// y  distancia inicial del eje y al punto
+	mov x23, x4  	// radio
+	mul x23, x23, x23   // radio*radio
+	mov x20, x3
+
+ ciclo1: 
+    sub x21, x21, 1
+	add x1, x1, 1
+    mul x24, x21, x21
+	mul x26, x22, x22
+	add x24, x24, x26 
+	add x3, x3, 1
+    cmp x24, x23 
+	b.gt ciclo1
+    bl p_pixel
+	cbnz x21, ciclo1  
+ 	mov x21, x4
+	mov x1, x25
+	add x2, x2, 1
+	sub x22, x22, 1
+	cbnz x22, ciclo1 
+   	 
+	lsl x9, x4, 1
+	add x1, x25, x9		// x = x + 2 * radio
+	mov x2, x27			// y = y
+	mov x21, x4
+	mov x22, x4
+	mov x3, x20
+
+ ciclo2: 
+    sub x21, x21, 1
+	sub x1, x1, 1
+    mul x24, x21, x21
+	mul x26, x22, x22
+	add x24, x24, x26 
+	add x3, x3, 1
+    cmp x24, x23 
+	b.gt ciclo2
+    bl p_pixel
+	cbnz x21, ciclo2
+ 	mov x21, x4
+	lsl x9, x4, 1
+	add x1, x25, x9		// x = x + 2 * radio
+	add x2, x2, 1
+	sub x22, x22, 1
+	cbnz x22, ciclo2 
+
+    
+	mov x1, x25
+	add x2, x2, x4
+	sub x2, x2, 1	// y = y + radio -1
+	mov x21, x4
+	mov x22, x4
+	mov x3, x20
+
+ ciclo3: 
+    sub x21, x21, 1
+	add x1, x1, 1
+    mul x24, x21, x21
+	mul x26, x22, x22
+	add x24, x24, x26 
+	add x3, x3, 1
+    cmp x24, x23 
+	b.gt ciclo3
+    bl p_pixel
+	cbnz x21, ciclo3
+ 	mov x21, x4
+	mov x1, x25			// = x
+	sub x2, x2, 1
+	sub x22, x22, 1
+	cbnz x22, ciclo3 
+
+
+
+    lsl x9, x4, 1
+	add x1, x25, x9		// x = x + 2 * radio
+	add x2, x2, x4
+	mov x21, x4
+	mov x22, x4
+	mov x3, x20
+
+ ciclo4: 
+    sub x21, x21, 1
+	sub x1, x1, 1
+    mul x24, x21, x21
+	mul x26, x22, x22
+	add x24, x24, x26 
+	add x3, x3, 1
+    cmp x24, x23 
+	b.gt ciclo4
+    bl p_pixel
+	cbnz x21, ciclo4
+ 	mov x21, x4
+	lsl x9, x4, 1
+	add x1, x25, x9		// x = x + 2 * radio
+	sub x2, x2, 1
+	sub x22, x22, 1
+	cbnz x22, ciclo4
+
+	//-------------------- END CODE -------------------------//
+	mov x1, x25 	
+	mov x2, x27 		
+	mov x4, x23   
+	mov x3, x20	
+
+	ldur x21 , [sp, #0]
+	ldur x22 , [sp, #8]
+	ldur x23 , [sp, #16]
+	ldur x24 , [sp, #24]
+	ldur x25, [sp, #32]
+	ldur x26 , [sp, #40]
+	ldur x27 , [sp, #48]
+	ldur x20 , [sp, #56]
+	ldur lr , [sp, #64]
+	add sp, sp , 72
+
+endCirculo: br lr
+
+medioCirculo: // pre: {}    args: (in x0 = direccion base framebufer, x1 = x, x2 = y,  x3 = color,  x4 = radio)
+	/* Inicializacion */
 	sub sp, sp , 64
 	stur x21 , [sp, #0]
 	stur x22 , [sp, #8]
@@ -512,21 +643,21 @@ circulo: // pre: {}    args: (in x0 = direccion base framebufer, x1 = x, x2 = y,
 	mov x23, x4  	// radio
 	mul x23, x23, x23   // radio*radio
 
- ciclo1: 
+ mediociclo1: 
     sub x21, x21, 1
 	add x1, x1, 1
     mul x24, x21, x21
 	mul x26, x22, x22
 	add x24, x24, x26 
     cmp x24, x23 
-	b.gt ciclo1
+	b.gt mediociclo1
     bl p_pixel
-	cbnz x21, ciclo1  
+	cbnz x21, mediociclo1  
  	mov x21, x4
 	mov x1, x25
 	add x2, x2, 1
 	sub x22, x22, 1
-	cbnz x22, ciclo1 
+	cbnz x22, mediociclo1 
    	 
 	lsl x9, x4, 1
 	add x1, x25, x9		// x = x + 2 * radio
@@ -534,70 +665,22 @@ circulo: // pre: {}    args: (in x0 = direccion base framebufer, x1 = x, x2 = y,
 	mov x21, x4
 	mov x22, x4
 
- ciclo2: 
+ mediociclo2: 
     sub x21, x21, 1
 	sub x1, x1, 1
     mul x24, x21, x21
 	mul x26, x22, x22
 	add x24, x24, x26 
     cmp x24, x23 
-	b.gt ciclo2
+	b.gt mediociclo2
     bl p_pixel
-	cbnz x21, ciclo2
+	cbnz x21, mediociclo2
  	mov x21, x4
 	lsl x9, x4, 1
 	add x1, x25, x9		// x = x + 2 * radio
 	add x2, x2, 1
 	sub x22, x22, 1
-	cbnz x22, ciclo2 
-
-    
-	mov x1, x25
-	add x2, x2, x4
-	sub x2, x2, 1	// y = y + radio -1
-	mov x21, x4
-	mov x22, x4
-
- ciclo3: 
-    sub x21, x21, 1
-	add x1, x1, 1
-    mul x24, x21, x21
-	mul x26, x22, x22
-	add x24, x24, x26 
-    cmp x24, x23 
-	b.gt ciclo3
-    bl p_pixel
-	cbnz x21, ciclo3
- 	mov x21, x4
-	mov x1, x25			// = x
-	sub x2, x2, 1
-	sub x22, x22, 1
-	cbnz x22, ciclo3 
-
-
-
-    lsl x9, x4, 1
-	add x1, x25, x9		// x = x + 2 * radio
-	add x2, x2, x4
-	mov x21, x4
-	mov x22, x4
-
- ciclo4: 
-    sub x21, x21, 1
-	sub x1, x1, 1
-    mul x24, x21, x21
-	mul x26, x22, x22
-	add x24, x24, x26 
-    cmp x24, x23 
-	b.gt ciclo4
-    bl p_pixel
-	cbnz x21, ciclo4
- 	mov x21, x4
-	lsl x9, x4, 1
-	add x1, x25, x9		// x = x + 2 * radio
-	sub x2, x2, 1
-	sub x22, x22, 1
-	cbnz x22, ciclo4
+	cbnz x22, mediociclo2 
 
 	//-------------------- END CODE -------------------------//
 	mov x1, x25 	
@@ -614,8 +697,7 @@ circulo: // pre: {}    args: (in x0 = direccion base framebufer, x1 = x, x2 = y,
 	ldur lr , [sp, #56]
 	add sp, sp , 64
 
-endCirculo: br lr
-
+endMedioCirculo: br lr
 
 // Formas combinadas:
 
@@ -1176,29 +1258,29 @@ fondoPlanetas: // pre: {} args: (in x0 = direccion base del framebuffer, x7 = De
 	mov x4, 16	// arg: ancho
 
 	mov x1, 100
-	mov x2, 190
+	mov x2, 290
 	add x2, x2, x21	
-	movz x3, 0xc9, lsl 16		//AMARILLO
-	movk x3, 0x9039, lsl 00
+	movz x3, 0xe0, lsl 16		//AMARILLO
+	movk x3, 0xbba2, lsl 00
 	mov x4, 40
 	bl circulo
 
 	mov x1, 530
-	mov x2, 280
+	mov x2, 380
 	add x2, x2, x21	
-	movz x3, 0x20, lsl 16		//ROSA
-	movk x3, 0x8FAF, lsl 00
+	movz x3, 0xcc, lsl 16		//CELESTE
+	movk x3, 0x1414, lsl 00
 	mov x4, 20
 	bl circulo
 
 	mov x1, 325
 	mov x2, 115
 	add x2, x2, x21
-	movz x3, 0xc1, lsl 16		
-	movk x3, 0x1212, lsl 00		//ROJO
+	movz x3, 0x12, lsl 16		
+	movk x3, 0x3f3f, lsl 00		//AZUL
 	mov x4, 30
 	bl circulo
-	
+
 	//-------------------- END CODE ---------------------------//
 
 	mov x1, x19 
@@ -1237,22 +1319,23 @@ borrarPlanetas: // pre: {} args: (in x0 = direccion base del framebuffer, x7 = D
 
 
 	mov x1, 100
-	mov x2, 190
+	mov x2, 290
 	add x2, x2, x21	
 	mov x4, 40
-	bl circulo
+	bl medioCirculo
 
 	mov x1, 530
-	mov x2, 280
+	mov x2, 380
 	add x2, x2, x21	
 	mov x4, 20
-	bl circulo
+	bl medioCirculo
 
 	mov x1, 325
 	mov x2, 115
 	add x2, x2, x21
+
 	mov x4, 30
-	bl circulo
+	bl medioCirculo
 	
 	//-------------------- END CODE ---------------------------//
 
@@ -1370,7 +1453,7 @@ fondoDinamico: // pre: {} args: (in x0 = direccion base del framebuffer, x3 = co
 	add x1, x9, 13		// arg: semilla x
 	add x2, x9, 34		// arg: semilla y
 						// arg: x3 = color
-	mov x4, 40	    	// arg: numero de estrellas 
+	mov x4, 30	    	// arg: numero de estrellas 
 	mov x5, x21			// arg: Desplazamiento vertical
 	bl fondoEstrellado 
 
@@ -1379,9 +1462,9 @@ fondoDinamico: // pre: {} args: (in x0 = direccion base del framebuffer, x3 = co
 	add x1, x9, 21		// arg: semilla x
 	add x2, x9, 71		// arg: semilla y  
 						// arg: x3 = color
-	mov x4, 40	    	// arg: numero de estrellas 
+	mov x4, 20	    	// arg: numero de estrellas 
 	mov x5, x21		    // arg: Desplazamiento vertical
-	bl fondoEstrellado 
+	//bl fondoEstrellado 
 
 						// arg: x0 = direct base del frame buffer
 						// arg: x7 = Desplazamiento vertical
