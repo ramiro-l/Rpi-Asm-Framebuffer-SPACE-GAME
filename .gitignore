@@ -4,4 +4,4 @@ kernel8.list
 kernel8.img 
 kernel8.elf
 *.c
-TPQUEMU_LugoViola_ViolaDiBenedetto_Gimenez.tar
+*.tar
