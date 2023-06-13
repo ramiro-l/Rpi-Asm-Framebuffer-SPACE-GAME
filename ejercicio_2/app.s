@@ -79,6 +79,7 @@ main: // x0 = direccion base del framebuffer
  	mov x7, x23		// arg: desplazamiento vertical
 	bl fondoDinamico
 					// arg: x0 = direct base del frame buffer
+	mov x6, x24		// arg: x6 = tipo
 					// arg: x7 = desplazamiento vertical
 	bl borrarPlanetas
 
@@ -629,24 +630,27 @@ circulo: // pre: {}    args: (in x0 = direccion base framebufer, x1 = x, x2 = y,
 
 endCirculo: br lr
 
-medioCirculo: // pre: {}    args: (in x0 = direccion base framebufer, x1 = x, x2 = y,  x3 = color,  x4 = radio)
+medioCirculo: // pre: {}    args: (in x0 = direccion base framebufer, x1 = x, x2 = y,  x3 = color,  x4 = radio, x5 = grosor)
 	/* Inicializacion */
-	sub sp, sp , 64
-	stur x21 , [sp, #0]
-	stur x22 , [sp, #8]
-	stur x23 , [sp, #16]
-	stur x24 , [sp, #24]
-	stur x25, [sp, #32]
-	stur x26 , [sp, #40]
-	stur x27 , [sp, #48]
-	stur lr , [sp, #56]
+	sub sp, sp , 72
+	stur x20, [sp, #0]
+	stur x21 , [sp, #8]
+	stur x22 , [sp, #16]
+	stur x23 , [sp, #24]
+	stur x24 , [sp, #32]
+	stur x25, [sp, #40]
+	stur x26 , [sp, #48]
+	stur x27 , [sp, #56]
+	stur lr , [sp, #64]
 	
 	//-------------------- CODE ---------------------------//
 	mov x25, x1		// posicion del framebufer x
 	mov x27, x2		// posicion del framebufer y
 	mov x21, x4  	// x  distancia incial del eje x al punto 
 	mov x22, x4  	// y  distancia inicial del eje y al punto
-	mov x23, x4  	// radio
+	mov x23, x4  		// radio
+	sub x20, x4, x5
+	mul x20, x20, x20
 	mul x23, x23, x23   // radio*radio
 
  mediociclo1: 
@@ -657,6 +661,8 @@ medioCirculo: // pre: {}    args: (in x0 = direccion base framebufer, x1 = x, x2
 	add x24, x24, x26 
     cmp x24, x23 
 	b.gt mediociclo1
+	cmp x24, x20
+	b.lt 8
     bl p_pixel
 	cbnz x21, mediociclo1  
  	mov x21, x4
@@ -679,6 +685,8 @@ medioCirculo: // pre: {}    args: (in x0 = direccion base framebufer, x1 = x, x2
 	add x24, x24, x26 
     cmp x24, x23 
 	b.gt mediociclo2
+	cmp x24, x20
+	b.lt 8
     bl p_pixel
 	cbnz x21, mediociclo2
  	mov x21, x4
@@ -693,16 +701,17 @@ medioCirculo: // pre: {}    args: (in x0 = direccion base framebufer, x1 = x, x2
 	mov x2, x27 		
 	mov x4, x23   	
 
-	ldur x21 , [sp, #0]
-	ldur x22 , [sp, #8]
-	ldur x23 , [sp, #16]
-	ldur x24 , [sp, #24]
-	ldur x25, [sp, #32]
-	ldur x26 , [sp, #40]
-	ldur x27 , [sp, #48]
-	ldur lr , [sp, #56]
-	add sp, sp , 64
-
+	
+	ldur x20 , [sp, #0]
+	ldur x21 , [sp, #8]
+	ldur x22 , [sp, #16]
+	ldur x23 , [sp, #24]
+	ldur x24 , [sp, #32]
+	ldur x25 , [sp, #40]
+	ldur x26 , [sp, #48]
+	ldur x27 , [sp, #56]
+	ldur lr , [sp, #64]
+	add  sp, sp , 72
 endMedioCirculo: br lr
 
 // Formas combinadas:
@@ -924,7 +933,7 @@ nave: 		//  pre: {}  args: (in x0 = direccion base del framebuffer, x1 = x, x2 =
 			 			// arg: x4 = ancho
 			 			// arg: x5 = alto
 	bl rectangulo
-
+ /* 
 	//Rectangulo derecho mas chico naranja/rojo
 	add x9, x19, 30		// calculo: x + 30
 	add x10, x20, 20     // calculo y + 20
@@ -949,7 +958,7 @@ nave: 		//  pre: {}  args: (in x0 = direccion base del framebuffer, x1 = x, x2 =
 			 			// arg: x5 = alto
 	bl rectangulo
 
-
+*/
 	//Rectangulo abajo amarillo
 	add x10, x20, 31    // calculo y + 31
 
@@ -985,13 +994,14 @@ nave: 		//  pre: {}  args: (in x0 = direccion base del framebuffer, x1 = x, x2 =
 			 			// arg: x4 = ancho
 			 			// arg: x5 = alto
 	bl rectangulo
-       
+    /*    
     //Rectangulo abajo naranja/rojo             Esta es la parte del fuego
 
 	// Extraemos los colores:
 
     add x10, x20, 38   // calculo y + 36
 
+	
 	cmp x25, VELOCIDAD_NORMAL
 	b.eq normal
 
@@ -1000,13 +1010,13 @@ nave: 		//  pre: {}  args: (in x0 = direccion base del framebuffer, x1 = x, x2 =
 
 	b 12
     normal: 
-		movz x9, 0xFF, lsl 16		//ROJO
-	 	movk x9, 0x3822, lsl 00	    //ROJO (#F73822)
+	movz x9, 0xFF, lsl 16		//ROJO
+	movk x9, 0x3822, lsl 00	    //ROJO (#F73822)
 
   						// arg: direccion base del framebuffer
 	mov x1,	x19 		// arg: x
 	mov x2,	x10			// arg: y
-	mov x3, x9 		// arg: color
+	mov x3, x9 			// arg: color
 	mov x4, 20			// arg: ancho
 	mov x5, 8			// arg: alto
 	add x6, x6, 1
@@ -1019,10 +1029,70 @@ nave: 		//  pre: {}  args: (in x0 = direccion base del framebuffer, x1 = x, x2 =
 	mov x2,	x10 
 	mov x4, 20			// arg: ancho
 	mov x5, 8
-	movz x3, 0x0E, lsl 16			//NEGRO
-	movk x3, 0x0E0E, lsl 00			//NEGRO (#0E0E0E)
-	bl rectangulo                 // un pedazo de rectangulo negro del rectangulo rojo dibujado anteriormente 
+	movz x3, 0x0E, lsl 16			 //NEGRO
+	movk x3, 0x0E0E, lsl 00			 //NEGRO (#0E0E0E)
+	bl rectangulo                	 // un pedazo de rectangulo negro del rectangulo rojo dibujado anteriormente 
+	*/
+
+
+	//Rectangulo abajo naranja/rojo             Esta es la parte del fuego
+
+	// Extraemos los colores:
+
+    add x10, x20, 38   // calculo y + 36
+
+	cmp x25, VELOCIDAD_NORMAL
+	b.eq normal
+
+	movz x9, 0x05, lsl 16		//AZUL
+	movk x9, 0xffee, lsl 00	    //AZUL (#1E86F5)
+	mov  x24, x9
+
+	b 12
+    normal: 
+		movz x9, 0xff, lsl 16		//ROJO
+	 	movk x9, 0x3e05, lsl 00	    //ROJO (#F73822)
+	 	mov x24, x9
+
+  						// arg: direccion base del framebuffer
+	mov x1,	x19 		// arg: x
+	mov x2,	x10			// arg: y
+	mov x3, x9 		// arg: color
+	mov x4, 20			// arg: ancho
+	mov x5, 8			// arg: alto
+	mov x27, x1
+    mov x1 , 12				// Setea el deley
+	bl deley
+	mov x1, x27
+	bl rectangulo
+
 	
+	
+//	rectangulos chicos izquierda y derecha rojos y celestes
+	add x11, x19, 30		// calculo: x + 30
+	add x10, x20, 20     // calculo y + 20
+						// arg: X0 = direccion base del framebuffer
+	mov x1,	x11 			// arg: x
+	mov x2,	x10			// arg: y
+	mov x3, x24 			// arg: color
+	mov x4, 6			// arg: ancho
+	mov x5, 6			// arg: alto
+	
+	bl rectangulo
+    
+	//Rectangulo izquierdo mas chico naranja/rojo
+	sub x11, x19, 30		// calculo: x - 30
+	add x10, x20, 20     // calculo y + 20
+
+						// arg: X0 = direccion base del framebuffer
+	mov x1,	x11 			// arg: x
+	mov x2,	x10			// arg: y
+			 			// arg: x4 = ancho
+			 			// arg: x5 = alto
+	bl rectangulo
+
+	mov x1, 11
+	bl deley
 
 
  //-------------------- END CODE ---------------------------//
@@ -1224,7 +1294,6 @@ borrar_nave: 		// pre: {}  args: (in x0 = direccion base del framebuffer, x1 = x
 	mov x4, 20			// arg: ancho
 	mov x5, 20			// arg: alto
 	bl rectangulo
-    
 
  //-------------------- END CODE ---------------------------//
 
@@ -1302,7 +1371,7 @@ fondoPlanetas: // pre: {} args: (in x0 = direccion base del framebuffer, x7 = De
 	add sp, sp , 32
 endFondoPlanetas: br lr
 
-borrarPlanetas: // pre: {} args: (in x0 = direccion base del framebuffer, x7 = Desplazamiento vertical)
+borrarPlanetas: // pre: {} args: (in x0 = direccion base del framebuffer, x6 = tipo ,x7 = Desplazamiento vertical)
 	sub sp, sp , 32
 	stur x19 , [sp, #0]
 	stur x20 , [sp, #8]
@@ -1323,24 +1392,34 @@ borrarPlanetas: // pre: {} args: (in x0 = direccion base del framebuffer, x7 = D
 	mov x4, 16	// arg: ancho
 
 
-
 	mov x1, 100
 	mov x2, 290
 	add x2, x2, x21	
 	mov x4, 40
+	mov x5, 2
+	cmp x6, VELOCIDAD_NORMAL
+	b.eq 8
+	add x5,x5, 4
 	bl medioCirculo
 
 	mov x1, 530
 	mov x2, 380
 	add x2, x2, x21	
 	mov x4, 20
+	mov x5, 2
+	cmp x6, VELOCIDAD_NORMAL
+	b.eq 8
+	add x5,x5, 4
 	bl medioCirculo
 
 	mov x1, 325
 	mov x2, 115
 	add x2, x2, x21
-
 	mov x4, 30
+	mov x5, 2
+	cmp x6, VELOCIDAD_NORMAL
+	b.eq 8
+	add x5,x5, 4
 	bl medioCirculo
 	
 	//-------------------- END CODE ---------------------------//
@@ -1489,6 +1568,5 @@ fondoDinamico: // pre: {} args: (in x0 = direccion base del framebuffer, x3 = co
 endFondoDinamico: br lr
 
 Error: // Nunca se deberia ejecutar esto
-		b Error
 		b Error
 		
