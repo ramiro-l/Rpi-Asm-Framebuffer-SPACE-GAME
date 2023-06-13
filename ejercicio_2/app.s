@@ -94,6 +94,7 @@ main: // x0 = direccion base del framebuffer
                 	// arg: x0 = direct base del frame buffer
 	                // arg: Color del las estrellas 
  	mov x7, x23		// arg: desplazamiento vertical
+
 	bl fondoDinamico
 
 	//Dibujamos la nave
@@ -787,8 +788,18 @@ nave: 		//  pre: {}  args: (in x0 = direccion base del framebuffer, x1 = x, x2 =
 	movz x23, 0xF1, lsl 16		//AMARILLO
 	movk x23, 0xCE2D, lsl 00	//AMARILLO (#F1CE2D)
 
-	movz x24, 0xF7, lsl 16		//ROJO
-	movk x24, 0x3822, lsl 00	//ROJO (#F73822)
+
+
+		
+	cmp x25, VELOCIDAD_NORMAL
+	b.eq normal
+		movz x24, 0x05, lsl 16		//AZUL
+		movk x24, 0xffee, lsl 00	//AZUL (#F73822)
+	b 12
+    normal: 
+			movz x24, 0xF7, lsl 16		//ROJO
+			movk x24, 0x3822, lsl 00	//ROJO (#F73822)
+
 
 	//Rectangulo central blanco
 						// arg: x0 = direccion base del framebuffer
@@ -892,7 +903,8 @@ nave: 		//  pre: {}  args: (in x0 = direccion base del framebuffer, x1 = x, x2 =
 						// arg: X0 = direccion base del framebuffer
 	mov x1,	x9 			// arg: x
 	mov x2,	x10			// arg: y
-	mov x3, x24 		// arg: color
+	movz x3, 0xF7, lsl 16		//ROJO
+	movk x3, 0x3822, lsl 00	//ROJO (#F73822)
 	mov x4, 6			// arg: ancho
 	mov x5, 4		    // arg: alto
 	bl rectangulo
@@ -933,7 +945,7 @@ nave: 		//  pre: {}  args: (in x0 = direccion base del framebuffer, x1 = x, x2 =
 			 			// arg: x4 = ancho
 			 			// arg: x5 = alto
 	bl rectangulo
- /* 
+ 
 	//Rectangulo derecho mas chico naranja/rojo
 	add x9, x19, 30		// calculo: x + 30
 	add x10, x20, 20     // calculo y + 20
@@ -958,14 +970,14 @@ nave: 		//  pre: {}  args: (in x0 = direccion base del framebuffer, x1 = x, x2 =
 			 			// arg: x5 = alto
 	bl rectangulo
 
-*/
+
 	//Rectangulo abajo amarillo
 	add x10, x20, 31    // calculo y + 31
 
 						// arg: X0 = direccion base del framebuffer
 	mov x1,	x19 		// arg: x
 	mov x2,	x10			// arg: y
-        mov x3, x23 		// arg: color
+    mov x3, x23 		// arg: color
 	mov x4, 22			// arg: ancho
 	mov x15, 6			// arg: alto
 	bl rectangulo
@@ -994,87 +1006,35 @@ nave: 		//  pre: {}  args: (in x0 = direccion base del framebuffer, x1 = x, x2 =
 			 			// arg: x4 = ancho
 			 			// arg: x5 = alto
 	bl rectangulo
-    /*    
+ 
     //Rectangulo abajo naranja/rojo             Esta es la parte del fuego
-
-	// Extraemos los colores:
-
     add x10, x20, 38   // calculo y + 36
-
-	
-	cmp x25, VELOCIDAD_NORMAL
-	b.eq normal
-
-	movz x9, 0xb3, lsl 16		//VIOLETA
-	movk x9, 0x1cd5, lsl 00	    //VIOLETA (#1E86F5)
-
-	b 12
-    normal: 
-	movz x9, 0xFF, lsl 16		//ROJO
-	movk x9, 0x3822, lsl 00	    //ROJO (#F73822)
 
   						// arg: direccion base del framebuffer
 	mov x1,	x19 		// arg: x
 	mov x2,	x10			// arg: y
-	mov x3, x9 			// arg: color
+	mov x3, x24 		// arg: color
 	mov x4, 20			// arg: ancho
 	mov x5, 8			// arg: alto
 	add x6, x6, 1
 	bl rectangulo
 	mov x27, x1
+
+
+
+
     mov x1 , 13				// Setea el deley
 	bl deley
-	mov x1, x27
-	add x10, x20, 42
-	mov x2,	x10 
-	mov x4, 20			// arg: ancho
-	mov x5, 8
+ //	rectangulos centro, izquierda y derecha de NEGROS 
+
 	movz x3, 0x0E, lsl 16			 //NEGRO
 	movk x3, 0x0E0E, lsl 00			 //NEGRO (#0E0E0E)
-	bl rectangulo                	 // un pedazo de rectangulo negro del rectangulo rojo dibujado anteriormente 
-	*/
-
-
-	//Rectangulo abajo naranja/rojo             Esta es la parte del fuego
-
-	// Extraemos los colores:
-
-    add x10, x20, 38   // calculo y + 36
-
-	cmp x25, VELOCIDAD_NORMAL
-	b.eq normal
-
-	movz x9, 0x05, lsl 16		//AZUL
-	movk x9, 0xffee, lsl 00	    //AZUL (#1E86F5)
-	mov  x24, x9
-
-	b 12
-    normal: 
-		movz x9, 0xff, lsl 16		//ROJO
-	 	movk x9, 0x3e05, lsl 00	    //ROJO (#F73822)
-	 	mov x24, x9
-
-  						// arg: direccion base del framebuffer
-	mov x1,	x19 		// arg: x
-	mov x2,	x10			// arg: y
-	mov x3, x9 		// arg: color
-	mov x4, 20			// arg: ancho
-	mov x5, 8			// arg: alto
-	mov x27, x1
-    mov x1 , 12				// Setea el deley
-	bl deley
-	mov x1, x27
-	bl rectangulo
-
-	
-	
-//	rectangulos chicos izquierda y derecha rojos y celestes
 	add x11, x19, 30		// calculo: x + 30
 	add x10, x20, 20     // calculo y + 20
 						// arg: X0 = direccion base del framebuffer
 	mov x1,	x11 			// arg: x
 	mov x2,	x10			// arg: y
-	mov x3, x24 			// arg: color
+						// arg: color
 	mov x4, 6			// arg: ancho
 	mov x5, 6			// arg: alto
 	
@@ -1091,8 +1051,13 @@ nave: 		//  pre: {}  args: (in x0 = direccion base del framebuffer, x1 = x, x2 =
 			 			// arg: x5 = alto
 	bl rectangulo
 
-	mov x1, 11
-	bl deley
+	mov x1, x27
+	add x10, x20, 42
+	mov x2,	x10 
+	mov x4, 20							// arg: ancho
+	mov x5, 8
+	bl rectangulo                	 // un pedazo de rectangulo negro del rectangulo rojo dibujado anteriormente 
+ 
 
 
  //-------------------- END CODE ---------------------------//
@@ -1540,16 +1505,7 @@ fondoDinamico: // pre: {} args: (in x0 = direccion base del framebuffer, x3 = co
 						// arg: x3 = color
 	mov x4, 30	    	// arg: numero de estrellas 
 	mov x5, x21			// arg: Desplazamiento vertical
-	bl fondoEstrellado 
-
-	mov x9, SEMILLA
-						// arg: x0 = direct base del frame buffer
-	add x1, x9, 21		// arg: semilla x
-	add x2, x9, 71		// arg: semilla y  
-						// arg: x3 = color
-	mov x4, 20	    	// arg: numero de estrellas 
-	mov x5, x21		    // arg: Desplazamiento vertical
-	//bl fondoEstrellado 
+	bl fondoEstrellado  
 
 						// arg: x0 = direct base del frame buffer
 						// arg: x7 = Desplazamiento vertical
