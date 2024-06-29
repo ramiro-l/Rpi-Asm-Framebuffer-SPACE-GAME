@@ -1,6 +1,6 @@
 # Rpi-Asm-Framebuffer-SPACE-GAME
 
-> Lab Org. de Computador.
+Proyecto de la clase de Organizador del Computador de la Licenciatura en Ciencias de la Computación.
 
 ## Previsualización
 
