@@ -4,6 +4,8 @@
 
 ## Previsualización
 
+https://github.com/ramiro-l/Rpi-Asm-Framebuffer-SPACE-GAME/assets/74385260/989ec836-37dd-4e4a-bdf5-46fa6ce6b424
+
 ## Descripción
 
 Este proyecto esta programado en ensamblador para la arquitectura ARMv8, utilizando el simulador QEMU.
