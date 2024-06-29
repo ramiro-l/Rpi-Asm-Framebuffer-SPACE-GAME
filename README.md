@@ -1,14 +1,10 @@
 # Rpi-Asm-Framebuffer-SPACE-GAME
 
-Proyecto de la clase de Organizador del Computador de la Licenciatura en Ciencias de la Computación.
-
-## Previsualización
-
 https://github.com/ramiro-l/Rpi-Asm-Framebuffer-SPACE-GAME/assets/74385260/989ec836-37dd-4e4a-bdf5-46fa6ce6b424
 
 ## Descripción
 
-Este proyecto esta programado en ensamblador para la arquitectura ARMv8, utilizando el simulador QEMU.
+Proyecto de la clase de Organizador del Computador de la Licenciatura en Ciencias de la Computación, programado en ensamblador para la arquitectura ARMv8, utilizando el simulador QEMU.
 
 Es un juego en donde una nave espacial se mueva por el espacio, añadiendo un fondo dinámico en donde las estrellas y planetas bajan a diferente velocidad, teniendo profundidad y haciendo el efecto de que la nave avanze.
 
